@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Partlet Math Study Coach</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root{
+      /* Brand palette */
+      --brand-50:#a99b04;
+      --brand-100:#71a88a;
+      --brand-200:#bfdbfe;
+      --brand-300:#93c5fd;
+      --brand-400:#60a5fa;
+      --brand-500:#3b82f6;
+      --brand-600:#a99b04;
+      --brand-700:#2a3a5f;
+      --emerald-600:#059669;
+      --gray-200:#e5e7eb;
+      --ink:#0f172a;
+    }
+
+    @media print { .no-print { display: none !important; } }
+    .toast { position: fixed; right: 16px; bottom: 16px; z-index: 50; }
+    dialog::backdrop { background: rgba(0,0,0,.35); }
+
+    .card{
+      background:#d6bebe;
+      border:1px solid var(--gray-200);
+      border-radius: 1rem;
+      box-shadow: 0 6px 18px rgba(2, 132, 199, .06);
+    }
+
+    .btn-primary{
+      background: linear-gradient(135deg, var(--brand-400), var(--brand-600));
+      color:#fff; border:1px solid rgba(255,255,255,.25);
+      border-radius: .9rem; padding:.6rem 1rem; font-weight:600;
+      box-shadow: 0 10px 18px rgba(37, 99, 235, .25);
+    }
+    .btn-primary:hover{ filter:brightness(.98) }
+    .btn-ghost{
+      background:#fff; color:var(--ink);
+      border:1px solid var(--gray-200);
+      border-radius:.8rem; padding:.5rem .9rem; font-weight:500;
+    }
+
+    input[type="range"]{
+      width:100%; cursor:pointer; height:6px; border-radius:999px; outline:none;
+      background: linear-gradient(90deg, var(--brand-200), var(--brand-400));
+    }
+    input[type="range"]::-webkit-slider-thumb{
+      -webkit-appearance:none; appearance:none;
+      width:20px; height:20px; border-radius:999px;
+      background:#fff; border:3px solid var(--brand-600);
+      box-shadow: 0 2px 6px rgba(0,0,0,.2);
+    }
+    input[type="range"]::-moz-range-thumb{
+      width:20px; height:20px; border-radius:999px;
+      background:#fff; border:3px solid var(--brand-600);
+      box-shadow: 0 2px 6px rgba(0,0,0,.2);
+    }
+
+    .bar {
+      background: linear-gradient(90deg, var(--brand-400), var(--brand-600));
+      height:.75rem; border-radius:999px;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.05), 0 2px 8px rgba(37,99,235,.25);
+    }
+
+    .chip {
+      background: var(--brand-50);
+      color: var(--brand-700);
+      border:1px solid var(--gray-200);
+      border-radius:.6rem; padding:.25rem .5rem; font-weight:600;
+    }
+
+    .modal-head{
+      background: linear-gradient(135deg, var(--brand-400), var(--brand-600));
+      color:#fff;
+    }
+
+    .resource:hover{
+      box-shadow: 0 8px 24px rgba(2,132,199,.15);
+      border-color: var(--brand-200);
+    }
+  </style>
+</head>
+
+<body class="min-h-screen bg-sky-50 text-slate-900">
+  <!-- Toast container -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- Header -->
+  <header class="sticky top-0 z-10 backdrop-blur bg-white/80 border-b">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center gap-3 justify-between">
+      <div class="flex items-center gap-3">
+        <img src="partlet-logo.png" alt="Partlet Math Study Coach" class="w-10 h-10 rounded-xl object-contain bg-white/60 border" />
+        <div>
+          <div class="font-semibold">Partlet Math Study Coach</div>
+          <div class="text-xs text-gray-600">Planner · Past Papers · Readiness</div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 text-sm">
+        <!-- Hide these until logged in -->
+        <span id="badgeBoard" class="requires-auth hidden px-2 py-1 rounded bg-blue-50 border text-blue-700">DBE</span>
+        <span id="badgeReady" class="requires-auth hidden px-2 py-1 rounded bg-emerald-50 border text-emerald-700">Readiness: 0%</span>
+
+        <!-- Auth UI -->
+        <div id="authArea" class="ml-2 flex items-center gap-2">
+          <button id="btnLogin"    class="px-2 py-1 rounded-lg border hover:bg-gray-50">Login</button>
+          <button id="btnRegister" class="px-2 py-1 rounded-lg border hover:bg-gray-50">Register</button>
+          <button id="btnForgot"   class="px-2 py-1 rounded-lg border hover:bg-gray-50">Forgot password</button>
+          <div id="whoami" class="hidden items-center gap-2">
+            <span class="px-2 py-1 rounded bg-gray-100 border" id="helloUser">Hi!</span>
+            <button id="btnLogout" class="px-2 py-1 rounded-lg border hover:bg-gray-50">Logout</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- PUBLIC LANDING (visible while logged OUT) -->
+  <section id="landing" class="public-only max-w-6xl mx-auto px-4 py-20 text-center">
+    <img src="partlet-logo.png" alt="Partlet Math Study Coach" class="mx-auto w-24 h-24 object-contain mb-4 rounded-xl bg-white/60 border" />
+    <h1 class="text-2xl font-bold mb-2">Partlet Math Study Coach</h1>
+    <p class="text-gray-600 mb-6">Plan smarter. Practice faster. Master Grade 12 Maths.</p>
+    <div class="flex items-center justify-center gap-3">
+      <button id="btnLoginLanding" class="px-4 py-2 rounded-lg border hover:bg-gray-50">Login</button>
+      <button id="btnRegisterLanding" class="px-4 py-2 rounded-lg border hover:bg-gray-50">Register</button>
+      <button id="btnForgotLanding" class="px-4 py-2 rounded-lg border hover:bg-gray-50">Forgot password</button>
+    </div>
+  </section>
+
+  <!-- APP (hidden until login) -->
+  <main class="requires-auth hidden max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Left column: Settings + Resources + Motivation -->
+    <div class="space-y-6 lg:col-span-1">
+      <!-- Settings -->
+      <section class="card shadow p-5">
+        <div class="flex items-center justify-between gap-4 mb-3">
+          <h2 class="text-xl font-semibold">Learner Setup</h2>
+          <div class="flex gap-2">
+            <button id="btnReset" class="btn-ghost text-red-700">Reset</button>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3 text-sm">
+          <label class="col-span-2">Learner name
+            <input id="inpName" class="w-full mt-1 px-3 py-2 rounded-lg border focus:ring-2 focus:ring-sky-300" placeholder="e.g. Thandi"/>
+          </label>
+          <label>Exam board
+            <select id="selBoard" class="w-full mt-1 px-3 py-2 rounded-lg border focus:ring-2 focus:ring-sky-300"><option>DBE</option><option>IEB</option></select>
+          </label>
+          <label>Exam start date
+            <input id="inpExam" type="date" class="w-full mt-1 px-3 py-2 rounded-lg border focus:ring-2 focus:ring-sky-300"/>
+          </label>
+          <label>Hours per week
+            <input id="inpHPW" type="number" min="1" max="40" class="w-full mt-1 px-3 py-2 rounded-lg border focus:ring-2 focus:ring-sky-300"/>
+          </label>
+          <label>Sessions per week
+            <input id="inpSPW" type="number" min="1" max="14" class="w-full mt-1 px-3 py-2 rounded-lg border focus:ring-2 focus:ring-sky-300"/>
+          </label>
+          <label>Minutes per session
+            <input id="inpMPS" type="number" min="30" step="10" class="w-full mt-1 px-3 py-2 rounded-lg border focus:ring-2 focus:ring-sky-300"/>
+          </label>
+          <label class="flex items-center gap-2 col-span-2"><input id="chkPast" type="checkbox" checked class="accent-sky-600"/> Include weekly past-paper session (alternates P1/P2)</label>
+        </div>
+        <div class="mt-3 flex flex-wrap gap-2">
+          <button id="btnGenerate" class="btn-primary">Generate / Update Plan</button>
+          <button id="btnICS" class="btn-ghost no-print" title="Export plan to your calendar (.ics)">Export .ics</button>
+        </div>
+        <p class="text-xs text-gray-600 mt-2">Calendar times: weekdays at <b>17:30</b>, weekends at <b>10:00</b> (local time).</p>
+      </section>
+
+      <!-- Motivation & Tracking -->
+      <section class="card shadow p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-xl font-semibold">Motivation & Tracking</h2>
+          <span id="streakChip" class="text-sm px-2 py-1 rounded bg-yellow-50 text-yellow-700 border">Streak: 0 days</span>
+        </div>
+        <div class="grid gap-3">
+          <div class="p-3 rounded-xl border">
+            <div class="flex items-center justify-between">
+              <div class="text-sm text-gray-700 font-semibold">Milestones</div>
+              <div class="text-xs text-gray-500 flex items-center gap-2">
+                <label class="hidden md:block">Edit:</label>
+                <input id="inpThresholds" class="px-2 py-1 rounded border w-40 focus:ring-2 focus:ring-sky-300" placeholder="50,70,90" />
+                <button id="btnSaveThresh" class="btn-ghost">Save</button>
+              </div>
+            </div>
+            <div id="milestones" class="mt-2 flex flex-wrap gap-2 text-xs"></div>
+          </div>
+          <div class="p-3 rounded-xl border">
+            <div class="flex items-center justify-between">
+              <div class="text-sm text-gray-700 font-semibold">Badges (completed)</div>
+              <button id="btnShareBadge" class="btn-ghost text-xs disabled:opacity-50" disabled>Share badge</button>
+            </div>
+            <div id="badges" class="mt-2 grid grid-cols-2 gap-2"></div>
+            <div id="noBadges" class="mt-2 text-xs text-gray-500 hidden">No badges yet — keep going! 💪</div>
+            <canvas id="certCanvas" width="900" height="500" class="hidden"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- Resources -->
+      <section class="card shadow p-5">
+        <h2 class="text-xl font-semibold mb-3">Resources & Past Papers</h2>
+        <div id="resources" class="grid gap-3"></div>
+        <div class="mt-4">
+          <div class="text-sm font-medium mb-2">Your extra links</div>
+          <div class="flex gap-2 mb-2">
+            <input id="inpLink" class="flex-1 px-3 py-2 rounded-lg border focus:ring-2 focus:ring-sky-300" placeholder="https://..." />
+            <button id="btnAddLink" class="btn-ghost">Add</button>
+            <button id="btnClearLinks" class="btn-ghost">Clear</button>
+          </div>
+          <div id="customLinks" class="grid gap-2"></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Right column: Topics + Plan -->
+    <div class="space-y-6 lg:col-span-2">
+      <!-- Topics & Self-assessment -->
+      <section class="card shadow p-5">
+        <h2 class="text-xl font-semibold mb-3">Topics & Self-assessment</h2>
+
+        <div class="flex flex-wrap gap-2 mb-4 text-sm">
+          <span class="chip">Paper 1: Algebra, Functions, Calculus</span>
+          <span class="chip">Paper 2: Trig, Geometry, Stats</span>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="space-y-4">
+            <h3 class="font-medium text-gray-700">Paper 1</h3>
+            <div id="topicsP1" class="grid gap-4"></div>
+          </div>
+          <div class="space-y-4">
+            <h3 class="font-medium text-gray-700">Paper 2</h3>
+            <div id="topicsP2" class="grid gap-4"></div>
+          </div>
+        </div>
+        <div class="mt-4 text-sm text-gray-600">Tip: Rate honestly. The readiness score combines plan completion (70%) and your confidence (30%).</div>
+      </section>
+
+      <!-- Plan -->
+      <section class="card shadow p-5">
+        <div class="flex items-center justify-between gap-4 mb-3">
+          <h2 class="text-xl font-semibold">Your Study Plan</h2>
+          <button class="btn-ghost no-print" onclick="window.print()">Print</button>
+        </div>
+        <div id="planEmpty" class="text-gray-700">No plan yet. Use <b>Generate / Update Plan</b> to create a personalised schedule up to your exam date.</div>
+        <div id="planWrap" class="hidden space-y-3">
+          <div class="flex items-center gap-4">
+            <div class="w-48 text-sm">Completion</div>
+            <div class="flex-1">
+              <div class="w-full bg-gray-200 rounded-full h-3">
+                <div id="barComp" class="bar" style="width:0%"></div>
+              </div>
+            </div>
+            <div id="lblComp" class="w-16 text-right text-sm">0%</div>
+          </div>
+          <div class="flex items-center gap-2 text-sm">
+            <span class="px-2 py-1 rounded bg-purple-50 text-purple-700 border">P1 sessions</span>
+            <span class="px-2 py-1 rounded bg-orange-50 text-orange-700 border">P2 sessions</span>
+          </div>
+          <div id="planList" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3"></div>
+        </div>
+      </section>
+
+      <!-- How to use -->
+      <section class="card shadow p-5">
+        <h2 class="text-xl font-semibold mb-3">How to use this app</h2>
+        <ol class="list-decimal pl-5 space-y-2 text-sm text-gray-800">
+          <li>Fill in your exam board, start date and study capacity. Click <b>Generate / Update Plan</b>.</li>
+          <li>Work through sessions in order. Mark each session done. Aim to finish each week’s <b>Past paper</b> slot under timed conditions.</li>
+          <li>Before/after a topic, slide your <b>confidence</b> rating. Watch your <b>Readiness</b> improve.</li>
+          <li>Use <b>Resources & Past Papers</b> to download official papers and the free Siyavula textbook.</li>
+          <li>Export to calendar using <b>Export .ics</b> and/or print (Ctrl/Cmd+P).</li>
+        </ol>
+      </section>
+    </div>
+  </main>
+
+  <footer class="requires-auth hidden py-8 text-center text-xs text-gray-500">
+    Built for South African Grade 12 learners · Your data stays in your browser (localStorage)
+  </footer>
+
+  <!-- Quiz modal (native dialog) -->
+  <dialog id="quizModal" class="rounded-2xl p-0 w-full max-w-2xl">
+    <div class="p-5 border-b flex items-center justify-between modal-head">
+      <div class="text-lg font-semibold" id="quizTitle">Quick Quiz</div>
+      <button id="quizClose" class="px-2 py-1 rounded bg-white/15 hover:bg-white/25 text-sm">Close</button>
+    </div>
+    <div class="p-5 space-y-4 max-h-[70vh] overflow-auto" id="quizBody"></div>
+    <div class="p-5 border-t flex items-center justify-between bg-sky-50">
+      <div class="text-sm text-gray-700" id="quizHint">Answer all questions, then submit.</div>
+      <div class="flex gap-2">
+        <button id="quizSubmit" class="btn-primary">Submit</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Quiz fallback sheet (for browsers without <dialog>) -->
+  <div id="quizSheet" class="fixed inset-0 bg-black/40 hidden items-end justify-center z-50">
+    <div class="bg-white w-full max-w-2xl rounded-t-2xl shadow-xl">
+      <div class="p-5 border-b flex items-center justify-between modal-head rounded-t-2xl">
+        <div class="text-lg font-semibold" id="sheetTitle">Quick Quiz</div>
+        <button id="sheetClose" class="px-2 py-1 rounded bg-white/15 hover:bg-white/25 text-sm">Close</button>
+      </div>
+      <div class="p-5 space-y-4 max-h-[70vh] overflow-auto" id="sheetBody"></div>
+      <div class="p-5 border-t flex items-center justify-between bg-sky-50">
+        <div class="text-sm text-gray-700" id="sheetHint">Answer all questions, then submit.</div>
+        <div class="flex gap-2">
+          <button id="sheetSubmit" class="btn-primary">Submit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auth dialog -->
+  <dialog id="authDialog" class="rounded-2xl p-0 w-full max-w-md">
+    <div class="p-5 border-b flex items-center justify-between">
+      <div class="text-lg font-semibold" id="authTitle">Login</div>
+      <button id="authClose" class="px-2 py-1 rounded border text-sm">Close</button>
+    </div>
+    <form id="authForm" class="p-5 space-y-3">
+      <label class="block text-sm">
+        <span>Display name</span>
+        <input id="authName" class="w-full mt-1 px-3 py-2 rounded-lg border" placeholder="e.g. Thandi" required />
+      </label>
+      <label class="block text-sm">
+        <span>Email (used as username)</span>
+        <input id="authEmail" type="email" class="w-full mt-1 px-3 py-2 rounded-lg border" placeholder="you@mail.com" required />
+      </label>
+      <label class="block text-sm">
+        <span>Password</span>
+        <input id="authPass" type="password" class="w-full mt-1 px-3 py-2 rounded-lg border" required />
+      </label>
+      <button id="authSubmit" class="w-full mt-2 px-4 py-2 rounded-xl bg-blue-600 text-white">Continue</button>
+      <div class="text-xs text-gray-500" id="authHint">Your details stay on this device.</div>
+    </form>
+  </dialog>
+
+  <!-- Forgot password dialog -->
+  <dialog id="forgotDialog" class="rounded-2xl p-0 w-full max-w-md">
+    <div class="p-5 border-b flex items-center justify-between">
+      <div class="text-lg font-semibold">Reset password</div>
+      <button id="forgotClose" class="px-2 py-1 rounded border text-sm">Close</button>
+    </div>
+    <form id="forgotForm" class="p-5 space-y-3">
+      <label class="block text-sm">
+        <span>Email</span>
+        <input id="forgotEmail" type="email" class="w-full mt-1 px-3 py-2 rounded-lg border" placeholder="you@mail.com" required />
+      </label>
+      <label class="block text-sm">
+        <span>New password</span>
+        <input id="forgotPass" type="password" class="w-full mt-1 px-3 py-2 rounded-lg border" required />
+      </label>
+      <button class="w-full mt-2 px-4 py-2 rounded-xl bg-blue-600 text-white">Update password</button>
+      <div class="text-xs text-gray-500">This resets your password locally on this device.</div>
+    </form>
+  </dialog>
+
+  <script>
+  // ------------- Safe helpers -------------
+  const safe = (fn)=>{ try{ return fn(); }catch(e){ console.error(e); return undefined; } };
+
+  /* ---------- Simple local auth (salted hash in localStorage) ---------- */
+  const KEY_USERS   = 'g12_auth_users_v1';    // { [email]: {name, salt, hash} }
+  const KEY_SESSION = 'g12_auth_session_v1';  // { email, name }
+
+  function getUsers(){ try{ return JSON.parse(localStorage.getItem(KEY_USERS))||{} }catch{ return {} } }
+  function setUsers(u){ localStorage.setItem(KEY_USERS, JSON.stringify(u)); }
+  function getSession(){ try{ return JSON.parse(localStorage.getItem(KEY_SESSION))||null }catch{ return null } }
+  function setSession(s){ if(s) localStorage.setItem(KEY_SESSION, JSON.stringify(s)); else localStorage.removeItem(KEY_SESSION); }
+
+  /* Crypto helpers */
+  async function sha256Hex(str){
+    const enc = new TextEncoder().encode(str);
+    const buf = await crypto.subtle.digest('SHA-256', enc);
+    return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+  function randSalt(len=16){
+    const a = new Uint8Array(len); crypto.getRandomValues(a);
+    return [...a].map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+
+  /* UI refs */
+  const authDialog = document.getElementById('authDialog');
+  const authTitle  = document.getElementById('authTitle');
+  const authForm   = document.getElementById('authForm');
+  const authClose  = document.getElementById('authClose');
+  const authName   = document.getElementById('authName');
+  const authEmail  = document.getElementById('authEmail');
+  const authPass   = document.getElementById('authPass');
+  const authHint   = document.getElementById('authHint');
+
+  const btnLogin    = document.getElementById('btnLogin');
+  const btnRegister = document.getElementById('btnRegister');
+  const btnForgot   = document.getElementById('btnForgot');
+  const btnLogout   = document.getElementById('btnLogout');
+  const helloUser   = document.getElementById('helloUser');
+  const whoamiWrap  = document.getElementById('whoami');
+
+  /* Landing buttons */
+  const btnLoginLanding    = document.getElementById('btnLoginLanding');
+  const btnRegisterLanding = document.getElementById('btnRegisterLanding');
+  const btnForgotLanding   = document.getElementById('btnForgotLanding');
+
+  /* Forgot dialog refs */
+  const forgotDialog = document.getElementById('forgotDialog');
+  const forgotForm   = document.getElementById('forgotForm');
+  const forgotEmail  = document.getElementById('forgotEmail');
+  const forgotPass   = document.getElementById('forgotPass');
+  const forgotClose  = document.getElementById('forgotClose');
+
+  /* Mode flag */
+//   let authMode = 'login'; // or 'register'
+
+//   function openAuth(mode='login'){
+//     authMode = mode;
+//     authTitle.textContent = mode === 'login' ? 'Login' : 'Register';
+//     authHint.textContent  = mode === 'login'
+//       ? 'Enter your email and password to sign in.'
+//       : 'A local account will be created on this device.';
+//     authName.parentElement.style.display = (mode==='register') ? 'block' : 'none';
+//     authForm.reset();
+//     if (window.HTMLDialogElement && typeof authDialog?.showModal === 'function'){ authDialog.showModal(); }
+//   }
+//   function closeAuth(){ authDialog?.close(); }
+
+//   function openForgot(){
+//     if (window.HTMLDialogElement && typeof forgotDialog?.showModal === 'function'){
+//       forgotForm.reset();
+//       forgotDialog.showModal();
+//     }
+//   }
+//   function closeForgot(){ forgotDialog?.close(); }
+// ------ Auth modal controller (drop-in replacement) ------
+let authMode = 'login'; // 'login' | 'register'
+
+// Safe open/close for <dialog> with fallback
+function openDialogSafe(dlg){
+  if (!dlg) return;
+  if (window.HTMLDialogElement && typeof dlg.showModal === 'function') {
+    dlg.showModal();
+  } else {
+    dlg.style.display = 'block';
+    dlg.setAttribute('open', '');
+  }
+}
+function closeDialogSafe(dlg){
+  if (!dlg) return;
+  if (typeof dlg.close === 'function') {
+    dlg.close();
+  } else {
+    dlg.style.display = 'none';
+    dlg.removeAttribute('open');
+  }
+}
+
+function openAuth(mode='login'){
+  authMode = mode;
+
+  // Titles & hint
+  if (authTitle) authTitle.textContent = mode === 'login' ? 'Login' : 'Register';
+  if (authHint) {
+    authHint.textContent = mode === 'login'
+      ? 'Enter your email and password to sign in.'
+      : 'A local account will be created on this device.';
+  }
+
+  // Toggle Display name row visibility + required flag
+  const showName = (mode === 'register');
+  if (authName) {
+    // Show/hide the containing row/label cleanly
+    if (authName.parentElement) {
+      authName.parentElement.style.display = showName ? 'block' : 'none';
+    }
+    authName.required = showName; // Critical: prevent hidden required from blocking submit
+    if (!showName) authName.value = ''; // optional: clear when hidden
+  }
+
+  // Always require email & password
+  if (authEmail) authEmail.required = true;
+  if (authPass)  authPass.required  = true;
+
+  // Reset only fields visible in this mode to avoid stale validation states
+  if (authForm) {
+    // A light reset that preserves browser autofill where possible
+    if (!showName && authName) authName.setCustomValidity('');
+    if (authEmail) authEmail.setCustomValidity('');
+    if (authPass)  authPass.setCustomValidity('');
+  }
+
+  openDialogSafe(authDialog);
+}
+
+function closeAuth(){
+  closeDialogSafe(authDialog);
+}
+
+// Optional Forgot Password handlers (safe if dialog not present)
+function openForgot(){
+  if (typeof forgotDialog === 'undefined' || !forgotDialog) {
+    alert('Forgot password: enter your email on the Login screen and we will guide you next.');
+    return;
+  }
+  if (typeof forgotForm !== 'undefined' && forgotForm) forgotForm.reset();
+  openDialogSafe(forgotDialog);
+}
+function closeForgot(){
+  if (typeof forgotDialog !== 'undefined' && forgotDialog) closeDialogSafe(forgotDialog);
+}
+
+  // Header & landing buttons
+  authClose?.addEventListener('click', closeAuth);
+  btnLogin?.addEventListener('click', ()=> openAuth('login'));
+  btnRegister?.addEventListener('click', ()=> openAuth('register'));
+  btnForgot?.addEventListener('click', openForgot);
+
+  btnLoginLanding?.addEventListener('click', ()=> openAuth('login'));
+  btnRegisterLanding?.addEventListener('click', ()=> openAuth('register'));
+  btnForgotLanding?.addEventListener('click', openForgot);
+  forgotClose?.addEventListener('click', closeForgot);
+
+  btnLogout?.addEventListener('click', ()=> {
+    setSession(null);
+    updateAuthUI();
+    showToast?.('Logged out');
+  });
+
+  /* Register / Login handler */
+  authForm?.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const email = authEmail.value.trim().toLowerCase();
+    const pass  = authPass.value;
+    const name  = (authName.value||'Learner').trim();
+    const users = getUsers();
+
+    if (authMode === 'register'){
+      if (users[email]){ alert('An account with this email already exists.'); return; }
+      const salt = randSalt();
+      const hash = await sha256Hex(pass + salt);
+      users[email] = { name, salt, hash };
+      setUsers(users);
+      setSession({ email, name });
+      showToast?.('Account created. You are logged in ✅');
+    } else {
+      const rec = users[email];
+      if (!rec){ alert('No account found for this email.'); return; }
+      const hash = await sha256Hex(pass + rec.salt);
+      if (hash !== rec.hash){ alert('Incorrect password.'); return; }
+      setSession({ email, name: rec.name });
+      showToast?.('Welcome back 👋');
+    }
+    closeAuth();
+    updateAuthUI();
+  });
+
+  // Forgot password: local reset
+  forgotForm?.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const email = forgotEmail.value.trim().toLowerCase();
+    const pass  = forgotPass.value;
+    const users = getUsers();
+    const rec   = users[email];
+    if (!rec){ alert('No account found for this email.'); return; }
+    const salt = randSalt();
+    const hash = await sha256Hex(pass + salt);
+    users[email] = { ...rec, salt, hash };
+    setUsers(users);
+    showToast?.('Password updated ✅');
+    closeForgot();
+  });
+
+  /* Toggle UI based on session */
+  function updateAuthUI(){
+    const s = getSession();
+    const loggedIn = !!s;
+
+    // header controls
+    document.getElementById('btnLogin')?.classList.toggle('hidden', loggedIn);
+    document.getElementById('btnRegister')?.classList.toggle('hidden', loggedIn);
+    document.getElementById('btnForgot')?.classList.toggle('hidden', loggedIn);
+    whoamiWrap?.classList.toggle('hidden', !loggedIn);
+    if (loggedIn && helloUser) helloUser.textContent = `Hi, ${s.name}`;
+
+    // landing vs app
+    document.querySelectorAll('.requires-auth').forEach(el => el.classList.toggle('hidden', !loggedIn));
+    document.querySelectorAll('.public-only').forEach(el => el.classList.toggle('hidden', loggedIn));
+  }
+
+  // ---------- Utilities ----------
+  const fmtDate = (d) => new Date(d).toISOString().slice(0,10);
+  const todayISO = () => fmtDate(new Date());
+  const clamp = (v,min,max)=> Math.max(min, Math.min(max, v));
+  const load = (k, def) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch { return def; } };
+  const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+  const randInt = (a,b)=> a + Math.floor(Math.random()*(b-a+1));
+
+  // ---------- Topics ----------
+  const TOPICS_P1 = [
+    { id:'func',  name:'Functions & Graphs',            weight:10, paper:'P1' },
+    { id:'algebra', name:'Algebra & Equations',         weight:10, paper:'P1' },
+    { id:'seq',   name:'Sequences & Series',            weight:8,  paper:'P1' },
+    { id:'finance', name:'Finance, Growth & Decay',     weight:6,  paper:'P1' },
+    { id:'calc',  name:'Differential & Integral Calculus', weight:18, paper:'P1' },
+  ];
+  const TOPICS_P2 = [
+    { id:'trig',  name:'Trigonometry',                  weight:16, paper:'P2' },
+    { id:'ana',   name:'Analytical Geometry',           weight:10, paper:'P2' },
+    { id:'euc',   name:'Euclidean Geometry',            weight:12, paper:'P2' },
+    { id:'prob',  name:'Probability & Statistics',      weight:10, paper:'P2' },
+  ];
+  const TOPICS = [...TOPICS_P1, ...TOPICS_P2];
+
+  // ---------- Defaults & Keys ----------
+  const DEFAULT_SETTINGS = {
+    learnerName: '',
+    examBoard: 'DBE',
+    examStart: fmtDate(new Date(new Date().getFullYear(), 10, 1)), // ~Nov 1
+    hoursPerWeek: 8,
+    sessionsPerWeek: 4,
+    minutesPerSession: 120,
+    includePastPaperSlot: true,
+  };
+  const KEY_SETTINGS = 'g12math_settings_v1';
+  const KEY_PROGRESS = 'g12math_progress_v1';
+  const KEY_PLAN = 'g12math_plan_v1';
+  const KEY_LINKS = 'g12math_links_v1';
+  const KEY_ACHIEVE = 'g12math_achieve_v1';
+  const KEY_QUIZ   = 'g12math_quiz_v1';
+  const DEFAULT_THRESHOLDS = [50,70,90];
+
+  // ---------- State ----------
+  let settings = load(KEY_SETTINGS, DEFAULT_SETTINGS);
+  let progress = load(KEY_PROGRESS, {});
+  let plan = load(KEY_PLAN, []);
+  let customLinks = load(KEY_LINKS, []);
+  let achieve = load(KEY_ACHIEVE, { thresholds: DEFAULT_THRESHOLDS, milestones: {50:false,70:false,90:false}, badges:{}, lastUnlockedId:null });
+  let quizState = load(KEY_QUIZ, { results: {} });
+
+  // ---------- DOM ----------
+  const $ = (id) => document.getElementById(id);
+  const inpName = $('inpName');
+  const selBoard = $('selBoard');
+  const inpExam = $('inpExam');
+  const inpHPW = $('inpHPW');
+  const inpSPW = $('inpSPW');
+  const inpMPS = $('inpMPS');
+  const chkPast = $('chkPast');
+
+  const btnGenerate = $('btnGenerate');
+  const btnReset = $('btnReset');
+  const btnICS = $('btnICS');
+
+  const resources = $('resources');
+  const topicsP1 = $('topicsP1');
+  const topicsP2 = $('topicsP2');
+
+  const planEmpty = $('planEmpty');
+  const planWrap = $('planWrap');
+  const planList = $('planList');
+  const barComp = $('barComp');
+  const lblComp = $('lblComp');
+
+  const badgeBoard = $('badgeBoard');
+  const badgeReady = $('badgeReady');
+
+  const inpLink = $('inpLink');
+  const btnAddLink = $('btnAddLink');
+  const btnClearLinks = $('btnClearLinks');
+  const customLinksWrap = $('customLinks');
+
+  const streakChip = $('streakChip');
+  const milestonesWrap = $('milestones');
+  const badgesWrap = $('badges');
+  const noBadges = $('noBadges');
+  const toast = $('toast');
+  const inpThresholds = $('inpThresholds');
+  const btnSaveThresh = $('btnSaveThresh');
+  const btnShareBadge = $('btnShareBadge');
+  const certCanvas = $('certCanvas');
+
+  // Quiz modal & fallback
+  const quizModal = $('quizModal');
+  const quizTitle = $('quizTitle');
+  const quizBody = $('quizBody');
+  const quizSubmit = $('quizSubmit');
+  const quizClose = $('quizClose');
+
+  const quizSheet = $('quizSheet');
+  const sheetTitle = $('sheetTitle');
+  const sheetBody = $('sheetBody');
+  const sheetSubmit = $('sheetSubmit');
+  const sheetClose = $('sheetClose');
+  const sheetHint = $('sheetHint');
+  const quizHint = $('quizHint');
+
+  // ---------- Mini-quiz bank ----------
+  const QUIZ_BANK = {
+    func: [
+      { q:"If f(x)=2x+3, find f(4).", choices:["5","8","11","14"], answer:2, steps:"f(4)=2×4+3=8+3=11." },
+      { q:"Solve for x: 2x−5=9.", choices:["2","5","7","14"], answer:2, steps:"2x=14 ⇒ x=7." },
+      { q:"The graph of y=x^2 opens…", choices:["Up","Down","Left","Right"], answer:0, steps:"Coefficient of x² is +1 > 0 ⇒ opens up." },
+    ],
+    algebra: [
+      { q:"Factorise: x^2−9.", choices:["(x−9)(x+1)","(x−3)(x+3)","(x−1)(x+9)","Prime"], answer:1, steps:"Difference of squares." },
+      { q:"Solve: 3x+2=11.", choices:["3","-3","-2","2"], answer:0, steps:"3x=9 ⇒ x=3." },
+    ],
+    seq: [
+      { q:"Find the 5th term of 2,5,8,…", choices:["11","13","14","18"], answer:2, steps:"Arithmetic: a=2,d=3 ⇒ a5=2+4×3=14." },
+      { q:"Sum of first n terms (arithmetic):", choices:["Sₙ = n/2(2a+(n−1)d)","Sₙ = a·r^(n−1)","Sₙ = n·a","None"], answer:0, steps:"Standard formula." },
+    ],
+    finance: [
+      { q:"Simple interest on R1000 at 10% for 2 years:", choices:["R100","R150","R180","R200"], answer:3, steps:"I=Prt=1000×0.1×2=200." },
+      { q:"Compound amount: R1000 at 10% for 1 year:", choices:["R1000","R1050","R1100","R1200"], answer:2, steps:"A=P(1+i)^n=1000(1.1)=1100." },
+    ],
+    calc: [
+      { q:"d/dx[x^2] =", choices:["2x","x","x^3","2"], answer:0, steps:"Power rule." },
+      { q:"∫ 2x dx =", choices:["x^2 + C","2x^2 + C","x^2/2 + C","ln|x| + C"], answer:0, steps:"∫2x dx = x^2 + C." },
+    ],
+    trig: [
+      { q:"sin^2θ + cos^2θ =", choices:["0","1","sinθ","cosθ"], answer:1, steps:"Pythagorean identity." },
+      { q:"tanθ = ?", choices:["sinθ / cosθ","cosθ / sinθ","1/sinθ","1/cosθ"], answer:0, steps:"Definition." },
+    ],
+    ana: [
+      { q:"Slope between (1,2) and (3,6):", choices:["1","2","3","4"], answer:1, steps:"m=(6−2)/(3−1)=4/2=2." },
+    ],
+    euc: [
+      { q:"Sum of interior angles of triangle:", choices:["90°","180°","270°","360°"], answer:1, steps:"Triangle sum theorem." },
+    ],
+    prob: [
+      { q:"P(A∪B) =", choices:["P(A)+P(B)","P(A)+P(B)−P(A∩B)","P(A)·P(B)","None"], answer:1, steps:"Addition rule." },
+    ],
+  };
+
+  // ---------- Worked Examples ----------
+  const EXAMPLES = {
+    func: { title:"Find intercepts of y=2x−4", prompt:"Find x- and y-intercepts.", steps:[
+      "y-intercept: set x=0 ⇒ y=−4 ⇒ (0,−4).",
+      "x-intercept: set y=0 ⇒ 0=2x−4 ⇒ x=2 ⇒ (2,0).",
+    ]},
+    algebra:{ title:"Solve x^2−5x+6=0", prompt:"Factorise and solve.", steps:[
+      "Factorise: (x−2)(x−3)=0.",
+      "So x=2 or x=3.",
+    ]},
+    seq:{ title:"Term formula", prompt:"Find aₙ for arithmetic seq with a=2,d=3", steps:[
+      "aₙ = a+(n−1)d = 2+3(n−1).",
+    ]},
+    finance:{ title:"Compound growth", prompt:"R2000 at 8% p.a. for 2 yrs", steps:[
+      "A=P(1+i)^n = 2000(1.08)^2 = 2332.8.",
+    ]},
+    calc:{ title:"Derivative of 3x^3", prompt:"Find dy/dx", steps:[
+      "d/dx[3x^3] = 9x^2.",
+    ]},
+    trig:{ title:"Solve sinθ=1/2", prompt:"0°≤θ<360°", steps:[
+      "Reference angle 30°; sin positive in QI & QII ⇒ θ=30°,150°.",
+    ]},
+    ana:{ title:"Distance between (1,2) and (4,6)", prompt:"Use distance formula", steps:[
+      "d=√((4−1)^2+(6−2)^2)=√(9+16)=5.",
+    ]},
+    euc:{ title:"Exterior angle", prompt:"Ext angle 110°, interior x and 40°", steps:[
+      "Ext angle = sum of remote interiors ⇒ 110=x+40 ⇒ x=70°.",
+    ]},
+    prob:{ title:"Complement rule", prompt:"If P(A)=0.3, find P(A')", steps:[
+      "P(A')=1−P(A)=0.7.",
+    ]},
+  };
+
+  // ---------- Init ----------
+  function init(){
+    if (!topicsP1 || !topicsP2){ console.error('Topics containers missing'); return; }
+
+    inpName && (inpName.value = settings.learnerName);
+    selBoard && (selBoard.value = settings.examBoard);
+    if (inpExam){ inpExam.value = settings.examStart; inpExam.min = todayISO(); }
+    inpHPW && (inpHPW.value = settings.hoursPerWeek);
+    inpSPW && (inpSPW.value = settings.sessionsPerWeek);
+    inpMPS && (inpMPS.value = settings.minutesPerSession);
+    if (chkPast) chkPast.checked = settings.includePastPaperSlot;
+    if (badgeBoard) badgeBoard.textContent = settings.examBoard;
+
+    renderResources();
+    renderTopicsColumn(topicsP1, TOPICS_P1);
+    renderTopicsColumn(topicsP2, TOPICS_P2);
+    renderPlan();
+    renderLinks();
+    renderAchievements();
+    updateReadiness();
+    updateStreak();
+    if (inpThresholds) inpThresholds.value = (achieve.thresholds||DEFAULT_THRESHOLDS).join(',');
+
+    // ensure initial auth visibility is correct
+    updateAuthUI();
+  }
+
+  // ---------- Renders ----------
+  function resourceLink(href, label, desc){
+    const a = document.createElement('a');
+    a.href = href; a.target = '_blank'; a.rel = 'noreferrer';
+    a.className = 'resource block p-4 rounded-xl border transition bg-white';
+    a.innerHTML = `<div class="font-medium">${label}</div><div class="text-sm text-gray-600">${desc}</div>`;
+    return a;
+  }
+
+  function renderResources(){
+    if (!resources) return;
+    resources.innerHTML = '';
+    if ((settings.examBoard||'DBE') === 'DBE'){
+      resources.append(
+        resourceLink('https://www.education.gov.za/Curriculum/NationalSeniorCertificate%28NSC%29Examinations/NSCPastExaminationpapers.aspx','DBE: NSC Past Exam Papers','Official Grade 12 past papers & memos (all subjects).'),
+        resourceLink('https://www.education.gov.za/2024NSCNovemberpastpapers.aspx','DBE: 2024 November Papers','The latest NSC November papers by subject.'),
+        resourceLink('https://wcedonline.westerncape.gov.za/grade-12-question-papers','WCED: Grade 12 Question Papers','Western Cape repository linking to DBE papers & memos.')
+      );
+    } else {
+      resources.append(
+        resourceLink('https://www.ieb.co.za/assessment/high-schools/national-senior-certificate/nsc-past-papers','IEB: NSC Past Papers','Official IEB papers & marking guidelines (recent 5 years).'),
+        resourceLink('https://www.sapapers.co.za/ieb/mathematics','IEB Maths Papers (Community)','Community mirror with many IEB Mathematics papers.')
+      );
+    }
+    resources.append(resourceLink('https://www.siyavula.com/read/za/mathematics/grade-12','Siyavula: Grade 12 Maths (Free Textbook)','Open textbook with exercises & worked examples.'));
+  }
+
+  function topicCard(t, score){
+    const ex = EXAMPLES[t.id];
+    const exHtml = ex ? `
+      <div class="mt-3 text-xs border rounded-lg p-3 bg-sky-50">
+        <div class="font-medium">${ex.title}</div>
+        <div class="text-gray-700">${ex.prompt}</div>
+        <button class="mt-2 px-2 py-1 rounded border text-xs" data-action="toggle-steps">Show steps</button>
+        <ul class="mt-2 list-disc pl-5 hidden" data-role="steps">
+          ${ex.steps.map(s=>`<li>${s}</li>`).join('')}
+        </ul>
+      </div>` : '';
+
+    return `
+      <div class="flex items-center justify-between mb-2">
+        <div class="font-medium">${t.name}</div>
+        <div class="text-xs text-gray-500">Weight ${t.weight}%</div>
+      </div>
+      <div class="text-sm">Confidence: <b id="lbl_${t.id}">${score}</b>/5</div>
+      <input id="rng_${t.id}" type="range" min="0" max="5" value="${score}" />
+      <div class="mt-3 text-sm flex items-center justify-between">
+        <span>Sessions completed: <span id="done_${t.id}">0</span></span>
+        <button class="px-2 py-1 rounded border text-xs" data-action="quiz" data-topic="${t.id}">Start quiz</button>
+      </div>
+      ${exHtml}
+    `;
+  }
+
+  function renderTopicsColumn(container, list){
+    if (!container) return;
+    container.innerHTML = '';
+    list.forEach(t => {
+      const score = (progress['self_'+t.id]?.score)||0;
+      const card = document.createElement('div');
+      card.className = 'p-4 rounded-xl border bg-white';
+      card.innerHTML = topicCard(t, score);
+      container.append(card);
+
+      // slider
+      safe(()=> card.querySelector('#rng_'+t.id).addEventListener('input', e => {
+        const v = +e.target.value;
+        progress['self_'+t.id] = { score: v };
+        save(KEY_PROGRESS, progress);
+        card.querySelector('#lbl_'+t.id).textContent = v;
+        updateReadiness();
+        evaluateBadges();
+      }));
+
+      // quiz open
+      safe(()=> card.querySelector('[data-action="quiz"]').addEventListener('click', ()=> openQuiz(t.id)));
+
+      // steps toggle
+      const toggleSteps = card.querySelector('[data-action="toggle-steps"]');
+      if (toggleSteps){
+        const listEl = card.querySelector('[data-role="steps"]');
+        safe(()=> toggleSteps.addEventListener('click', ()=>{
+          const hiddenNow = listEl.classList.toggle('hidden');
+          toggleSteps.textContent = hiddenNow ? 'Show steps' : 'Hide steps';
+        }));
+      }
+    });
+    updateTopicCompletions();
+  }
+
+  function renderLinks(){
+    if (!customLinksWrap) return;
+    customLinksWrap.innerHTML = '';
+    customLinks.forEach(l => customLinksWrap.append(resourceLink(l.href, l.href, 'Custom link')));
+  }
+
+  function renderAchievements(){
+    if (!milestonesWrap || !badgesWrap) return;
+    milestonesWrap.innerHTML = '';
+    const thresholds = (achieve.thresholds && achieve.thresholds.length) ? achieve.thresholds.slice().sort((a,b)=>a-b) : DEFAULT_THRESHOLDS;
+    thresholds.forEach(t => {
+      const key = String(t);
+      if (achieve.milestones[key] === undefined) achieve.milestones[key] = false;
+      const span = document.createElement('span');
+      span.className = 'px-2 py-1 rounded border ' + (achieve.milestones[key] ? 'bg-sky-100 text-sky-800' : 'bg-white text-gray-500');
+      span.textContent = `Readiness ≥ ${t}%`;
+      milestonesWrap.append(span);
+    });
+    save(KEY_ACHIEVE, achieve);
+
+    badgesWrap.innerHTML = '';
+    const defs = allBadgeDefs();
+    let count = 0;
+    defs.forEach(b => {
+      if (achieve.badges[b.id]){
+        const card = document.createElement('div');
+        card.className = 'p-3 rounded-xl border text-sm bg-sky-50 border-sky-100';
+        card.innerHTML = `<div class="font-medium">${b.label}</div><div class="text-gray-600 text-xs">${b.desc}</div>`;
+        badgesWrap.append(card);
+        count++;
+      }
+    });
+    if (noBadges) noBadges.classList.toggle('hidden', count !== 0);
+    if (btnShareBadge){ btnShareBadge.disabled = !Object.keys(achieve.badges).some(k => !!achieve.badges[k]); }
+  }
+
+  // ---------- Helpers ----------
+  function progressPct(){
+    if (!plan.length) return 0;
+    const completed = plan.filter(s => progress[s.id]?.done).length;
+    return Math.round(100 * completed / plan.length);
+  }
+  function getCompletedDatesSet(){
+    const set = new Set();
+    plan.forEach(s => { if (progress[s.id]?.done) set.add(s.date); });
+    return set;
+  }
+  function updateTopicCompletions(){
+    const counts = {}; TOPICS.forEach(t => counts[t.id] = 0);
+    plan.forEach(s => { if (progress[s.id]?.done) counts[s.topicId] = (counts[s.topicId]||0)+1; });
+    TOPICS.forEach(t => {
+      const span = document.getElementById('done_'+t.id);
+      if (span) span.textContent = counts[t.id]||0;
+    });
+  }
+  function showToast(msg){
+    if (!toast) return;
+    toast.innerHTML = `<div class="px-4 py-3 rounded-xl shadow bg-sky-600 text-white">${msg}</div>`;
+    toast.classList.remove('hidden');
+    setTimeout(()=> toast.classList.add('hidden'), 3000);
+  }
+  function updateReadiness(){
+    if (!badgeReady || !barComp || !lblComp) return;
+    const total = plan.length || 1;
+    const completed = plan.filter(s => progress[s.id]?.done).length;
+    const completionPct = completed / total;
+    const selfAvg = TOPICS.reduce((a,t)=> a + ((progress['self_'+t.id]?.score)||0), 0) / (TOPICS.length||1);
+    const ready = Math.round(100 * (0.7*completionPct + 0.3*(selfAvg/5)));
+    badgeReady.textContent = `Readiness: ${ready}%`;
+    const pct = progressPct();
+    barComp.style.width = pct+'%';
+    lblComp.textContent = pct+'%';
+
+    const thresholds = (achieve.thresholds && achieve.thresholds.length) ? achieve.thresholds : DEFAULT_THRESHOLDS;
+    thresholds.forEach(t => {
+      const key = String(t);
+      if (!achieve.milestones[key] && ready >= t){
+        achieve.milestones[key] = true;
+        save(KEY_ACHIEVE, achieve);
+        renderAchievements();
+        showToast(`Milestone reached: Readiness ≥ ${t}% 🎉`);
+      }
+    });
+  }
+  function updateStreak(){
+    if (!streakChip) return;
+    const dates = getCompletedDatesSet();
+    let streak = 0;
+    const oneDay = 24*3600*1000;
+    let cursor = new Date();
+    while (true){
+      const iso = fmtDate(cursor);
+      if (dates.has(iso)) { streak++; cursor = new Date(cursor.getTime() - oneDay); }
+      else break;
+    }
+    streakChip.textContent = `Streak: ${streak} ${streak===1?'day':'days'}`;
+    if (streak >= 7 && !achieve.badges['streak7']){
+      achieve.badges['streak7'] = true; save(KEY_ACHIEVE, achieve); renderAchievements(); showToast('Badge unlocked: 7-Day Streak! ⚡');
+    }
+  }
+
+  // ---------- Badges ----------
+  function allBadgeDefs(){
+    const staticDefs = [
+      { id:'starter',  label:'Plan Starter', desc:'Generated your first plan' },
+      { id:'ten',      label:'10 Sessions',  desc:'Completed 10 study sessions' },
+      { id:'thirty',   label:'30 Sessions',  desc:'Completed 30 study sessions' },
+      { id:'papers',   label:'Past Paper Champ', desc:'Completed 4 past-paper sessions' },
+      { id:'streak7',  label:'7-Day Streak', desc:'Studied 7 days in a row' },
+    ];
+    const topicDefs = TOPICS.map(t => ({ id:`master_${t.id}`, label:`${t.name.split('&')[0].trim()} Master`, desc:`Confidence ≥ 4 and 5 sessions in ${t.name}` }));
+    return [...staticDefs, ...topicDefs];
+  }
+  function getBadgeMeta(id){
+    return allBadgeDefs().find(d => d.id === id) || { id, label:id, desc:'' };
+  }
+  function evaluateBadges(){
+    let unlocked = false; let lastId = null;
+    if (plan.length && !achieve.badges['starter']){ achieve.badges['starter'] = true; unlocked = true; lastId='starter'; showToast('Badge unlocked: Plan Starter 🗓️'); }
+    const completed = plan.filter(s => progress[s.id]?.done).length;
+    if (completed >= 10 && !achieve.badges['ten']){ achieve.badges['ten'] = true; unlocked = true; lastId='ten'; showToast('Badge unlocked: 10 Sessions ✅'); }
+    if (completed >= 30 && !achieve.badges['thirty']){ achieve.badges['thirty'] = true; unlocked = true; lastId='thirty'; showToast('Badge unlocked: 30 Sessions 💪'); }
+    const ppCount = plan.filter(s => progress[s.id]?.done && /Past paper/i.test(s.note||'')).length;
+    if (ppCount >= 4 && !achieve.badges['papers']){ achieve.badges['papers'] = true; unlocked = true; lastId='papers'; showToast('Badge unlocked: Past Paper Champ 🏆'); }
+    TOPICS.forEach(t => {
+      const conf = (progress['self_'+t.id]?.score)||0;
+      const done = plan.filter(s => s.topicId === t.id && progress[s.id]?.done).length;
+      const key = `master_${t.id}`;
+      if (conf >= 4 && done >= 5 && !achieve.badges[key]){
+        achieve.badges[key] = true; unlocked = true; lastId=key; showToast(`Badge unlocked: ${t.name} Master 🌟`);
+      }
+    });
+    if (unlocked){
+      achieve.lastUnlockedId = lastId;
+      save(KEY_ACHIEVE, achieve);
+      renderAchievements();
+      if (btnShareBadge) btnShareBadge.disabled = false;
+    }
+  }
+
+  // ---------- Certificate PNG ----------
+  function downloadBadgePNG(badgeId){
+    if (!certCanvas) return;
+    const meta = getBadgeMeta(badgeId);
+    const ctx = certCanvas.getContext('2d');
+    const W = certCanvas.width, H = certCanvas.height;
+    const g = ctx.createLinearGradient(0,0,W,H);
+    g.addColorStop(0, '#e0f2fe'); g.addColorStop(1, '#d1fae5');
+    ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle = '#1f2937'; ctx.lineWidth = 6; ctx.strokeRect(18,18,W-36,H-36);
+    ctx.fillStyle = '#111827';
+    ctx.font = 'bold 40px system-ui, -apple-system, Segoe UI, Roboto'; ctx.fillText('Achievement Badge', 40, 90);
+    ctx.font = 'bold 60px system-ui, -apple-system, Segoe UI, Roboto'; wrapText(ctx, meta.label, 40, 170, W-80, 64);
+    ctx.font = '24px system-ui, -apple-system, Segoe UI, Roboto'; wrapText(ctx, meta.desc||'', 40, 230, W-80, 30);
+    const name = (settings.learnerName||'Grade 12 Learner').trim(); const date = new Date().toLocaleDateString();
+    ctx.font = 'bold 26px system-ui, -apple-system, Segoe UI, Roboto'; ctx.fillText(`Awarded to: ${name}`, 40, H-120);
+    ctx.font = '22px system-ui, -apple-system, Segoe UI, Roboto'; ctx.fillText(`Date: ${date}`, 40, H-80);
+    ctx.font = '18px system-ui, -apple-system, Segoe UI, Roboto'; ctx.fillText('Grade 12 Maths (SA) – Study Coach', 40, H-40);
+    const url = certCanvas.toDataURL('image/png'); const a = document.createElement('a'); a.href = url; a.download = `badge-${badgeId}.png`; document.body.appendChild(a); a.click(); a.remove();
+  }
+  function wrapText(ctx, text, x, y, maxWidth, lineHeight){
+    const words = String(text).split(' '); let line = '';
+    for (let n=0; n<words.length; n++){
+      const testLine = line + words[n] + ' '; const metrics = ctx.measureText(testLine);
+      if (metrics.width > maxWidth && n > 0){ ctx.fillText(line, x, y); line = words[n] + ' '; y += lineHeight; }
+      else { line = testLine; }
+    }
+    ctx.fillText(line.trim(), x, y);
+  }
+
+  // ---------- Mini-Quiz Engine ----------
+  let currentQuiz = null;
+  function sampleItems(topicId, min=5, max=10){
+    const bank = QUIZ_BANK[topicId] || [];
+    const k = clamp(randInt(min, max), 1, Math.max(1, bank.length || 1));
+    const pool = bank.length ? bank : [{ q:"No questions available yet.", choices:["OK"], answer:0, steps:"" }];
+    const shuffled = pool.map((v,i)=>[Math.random(), i]).sort((a,b)=>a[0]-b[0]).slice(0,k).map(x=>pool[x[1]]);
+    return shuffled;
+  }
+
+  function openQuiz(topicId){
+    currentQuiz = { topicId, items: sampleItems(topicId), answers: [], submitted:false };
+    if (window.HTMLDialogElement && typeof quizModal?.showModal === 'function'){
+      quizTitle.textContent = `Quick Quiz • ${(TOPICS.find(t=>t.id===topicId)||{}).name || ''}`;
+      renderQuizBody(true);
+      quizModal.showModal();
+    } else {
+      sheetTitle.textContent = `Quick Quiz • ${(TOPICS.find(t=>t.id===topicId)||{}).name || ''}`;
+      renderQuizBody(false);
+      quizSheet.classList.remove('hidden');
+      quizSheet.classList.add('flex');
+    }
+  }
+
+  function renderQuizBody(useDialog){
+    const body = useDialog ? quizBody : sheetBody;
+    const hint = useDialog ? quizHint : sheetHint;
+    const { items, submitted, answers=[] } = currentQuiz;
+    body.innerHTML = '';
+    items.forEach((it, idx)=>{
+      const group = document.createElement('div');
+      group.className = 'p-3 rounded-xl border bg-white';
+      const choiceHtml = it.choices.map((c,i)=>{
+        const checked = answers[idx] === i ? 'checked' : '';
+        let feedback = '';
+        if (submitted){
+          const correct = i === it.answer;
+          const chosen = answers[idx] === i;
+          if (chosen){
+            feedback = correct ? `<span class="ml-2 text-emerald-700">✓ Correct</span>` : `<span class="ml-2 text-red-700">✗</span>`;
+          }
+        }
+        return `<label class="block text-sm"><input ${checked} type="radio" name="q${idx}" value="${i}" class="mr-2 accent-sky-600">${c}${feedback}</label>`;
+      }).join('');
+
+      const stepsBlock = submitted
+        ? `<div class="mt-2 text-xs text-gray-700"><b>Steps:</b> ${it.steps||'—'}</div>`
+        : `<button class="mt-2 px-2 py-1 rounded border text-xs" data-action="show-steps" data-idx="${idx}">Show steps</button>
+           <div class="mt-2 text-xs text-gray-700 hidden" data-role="steps-${idx}"><b>Steps:</b> ${it.steps||'—'}</div>`;
+
+      group.innerHTML = `
+        <div class="font-medium mb-1">${idx+1}. ${it.q}</div>
+        ${choiceHtml}
+        ${stepsBlock}
+      `;
+      body.append(group);
+
+      group.querySelectorAll(`input[name="q${idx}"]`).forEach(r=>{
+        r.addEventListener('change', e=>{
+          currentQuiz.answers[idx] = +e.target.value;
+        });
+      });
+
+const btnSteps = group.querySelector('[data-action="show-steps"]');
+if (btnSteps){
+  btnSteps.addEventListener('click', ()=>{
+    const el = group.querySelector(`[data-role="steps-${idx}"]`);
+    if (!el) return; // defensive
+    const hiddenNow = el.classList.toggle('hidden');
+    btnSteps.textContent = hiddenNow ? 'Show steps' : 'Hide steps';
+  });
+}
+
+    });
+
+    hint.textContent = submitted ? 'Review your answers.' : 'Answer all questions, then submit.';
+    (useDialog ? quizSubmit : sheetSubmit).textContent = submitted ? 'Close' : 'Submit';
+  }
+
+  function scoreQuiz(){
+    const { items, answers=[] } = currentQuiz;
+    let correct = 0;
+    items.forEach((it,i)=> { if (answers[i] === it.answer) correct++; });
+    const score = Math.round(100 * correct / (items.length||1));
+    return { correct, total: items.length, score };
+  }
+
+  if (quizSubmit) quizSubmit.addEventListener('click', ()=>{
+    if (!currentQuiz) return;
+    if (!currentQuiz.submitted){
+      currentQuiz.submitted = true;
+      const { score, total, correct } = scoreQuiz();
+      renderQuizBody(true);
+      quizHint.textContent = `You scored ${score}% (${correct}/${total}).`;
+      const t = currentQuiz.topicId;
+      const prev = quizState.results[t] || { lastScore:0, attempts:0 };
+      quizState.results[t] = { lastScore: score, attempts: prev.attempts+1 };
+      save(KEY_QUIZ, quizState);
+      if (score < 60){ scheduleAdaptiveSessions(t, 2); showToast('Adaptive revision added: extra sessions scheduled.'); }
+    } else { quizModal.close(); }
+  });
+  if (quizClose) quizClose.addEventListener('click', ()=> quizModal.close());
+
+  if (sheetSubmit) sheetSubmit.addEventListener('click', ()=>{
+    if (!currentQuiz) return;
+    if (!currentQuiz.submitted){
+      currentQuiz.submitted = true;
+      const { score, total, correct } = scoreQuiz();
+      renderQuizBody(false);
+      sheetHint.textContent = `You scored ${score}% (${correct}/${total}).`;
+      const t = currentQuiz.topicId;
+      const prev = quizState.results[t] || { lastScore:0, attempts:0 };
+      quizState.results[t] = { lastScore: score, attempts: prev.attempts+1 };
+      save(KEY_QUIZ, quizState);
+      if (score < 60){ scheduleAdaptiveSessions(t, 2); showToast('Adaptive revision added: extra sessions scheduled.'); }
+    } else {
+      quizSheet.classList.add('hidden'); quizSheet.classList.remove('flex');
+    }
+  });
+  if (sheetClose) sheetClose.addEventListener('click', ()=>{
+    quizSheet.classList.add('hidden'); quizSheet.classList.remove('flex');
+  });
+
+  function scheduleAdaptiveSessions(topicId, count=2){
+    if (!plan.length){ return; }
+    const topic = TOPICS.find(t=>t.id===topicId) || { paper:'P1', id:topicId };
+    const start = new Date();
+    const added = [];
+    for (let i=0;i<count;i++){
+      const d = new Date(start);
+      d.setDate(d.getDate() + (i*7));
+      const dateISO = fmtDate(d);
+      const id = `${dateISO}_${topicId}_rev${Date.now()%100000}-${i}`;
+      const minutes = Math.round((settings.minutesPerSession||60) * 0.75);
+      added.push({ id, date: dateISO, topicId, minutes, note: 'Adaptive revision (from quiz)', paper: topic.paper });
+    }
+    plan = [...plan, ...added].sort((a,b)=> a.date.localeCompare(b.date));
+    save(KEY_PLAN, plan);
+    renderPlan();
+    updateReadiness();
+  }
+
+  function getStartTime(dateStr){
+    const d = new Date(dateStr + 'T00:00:00');
+    const wd = d.getDay();
+    if (wd === 0 || wd === 6) return {h:10, m:0};
+    return {h:17, m:30};
+  }
+
+  function generatePlan(){
+    const start = new Date();
+    const end = new Date(settings.examStart);
+    if (isNaN(end.getTime()) || end <= start){
+      alert('Please set a valid future exam start date.');
+      return;
+    }
+    const weeks = Math.max(1, Math.ceil((end - start) / (7*24*3600*1000)));
+    const sessionsPerWeek = clamp(settings.sessionsPerWeek, 1, 14);
+    const totalSessions = weeks * sessionsPerWeek;
+
+    const totalWeight = TOPICS.reduce((a,t)=> a + t.weight, 0);
+    let allocations = TOPICS.map(t => ({...t, sessions: Math.max(1, Math.round(totalSessions * (t.weight/totalWeight)))}));
+    let diff = totalSessions - allocations.reduce((a,t)=> a + t.sessions, 0);
+    while (diff !== 0){
+      const idx = Math.floor(Math.random()*allocations.length);
+      allocations[idx].sessions += Math.sign(diff);
+      diff -= Math.sign(diff);
+    }
+
+    const newPlan = [];
+    const daySlots = [1,2,3,4,5,6,0]; // Mon..Sun
+    let cursor = new Date(start);
+    let slotIdx = 0;
+
+    const pushSession = (topic) => {
+      while (cursor.getDay() !== daySlots[slotIdx % daySlots.length]){
+        cursor.setDate(cursor.getDate()+1);
+      }
+      const id = `${fmtDate(cursor)}_${topic.id}_${slotIdx}`;
+      newPlan.push({ id, date: fmtDate(cursor), topicId: topic.id, minutes: settings.minutesPerSession, note: 'Study + practice', paper: topic.paper });
+      slotIdx++;
+      cursor.setDate(cursor.getDate()+1);
+    };
+
+    const buckets = allocations.map(a => ({...a, left:a.sessions})).sort((a,b)=> a.paper.localeCompare(b.paper));
+    let placed = 0;
+    while (placed < totalSessions){
+      for (const b of buckets){
+        if (b.left > 0){ pushSession(b); b.left--; placed++; if (placed >= totalSessions) break; }
+      }
+    }
+
+    if (settings.includePastPaperSlot){
+      for (let w=0; w<weeks; w++){
+        const weekStartIdx = w * sessionsPerWeek;
+        const idx = Math.min(weekStartIdx + sessionsPerWeek - 1, newPlan.length - 1);
+        if (idx >= 0){
+          const pp = (w % 2 === 0) ? 'P1' : 'P2';
+          newPlan[idx].note = `Past paper practice (${pp})`;
+          newPlan[idx].paper = pp;
+        }
+      }
+    }
+
+    plan = newPlan;
+    save(KEY_PLAN, plan);
+    renderPlan();
+    updateReadiness();
+    evaluateBadges();
+  }
+
+  function renderPlan(){
+    if (!planList || !planEmpty || !planWrap) return;
+    if (!plan.length){
+      planEmpty.classList.remove('hidden');
+      planWrap.classList.add('hidden');
+      if (barComp) barComp.style.width = '0%';
+      if (lblComp) lblComp.textContent = '0%';
+      return;
+    }
+    planEmpty.classList.add('hidden');
+    planWrap.classList.remove('hidden');
+    planList.innerHTML = '';
+
+    plan.forEach(s => {
+      const label = document.createElement('label');
+      const badge = s.paper === 'P1' ? 'bg-purple-50 text-purple-700 border' : 'bg-orange-50 text-orange-700 border';
+      label.className = 'p-3 rounded-xl border bg-white flex gap-3 items-start cursor-pointer hover:shadow';
+      const topicName = (TOPICS.find(t=>t.id===s.topicId)||{}).name || 'Study Session';
+      label.innerHTML = `
+        <input type="checkbox" class="mt-1 accent-sky-600" ${progress[s.id]?.done ? 'checked' : ''} />
+        <div>
+          <div class="text-sm font-medium flex items-center gap-2">${s.date} • ${topicName}
+            <span class="text-[10px] px-2 py-0.5 rounded ${badge}">${s.paper||''}</span>
+          </div>
+          <div class="text-xs text-gray-600">${Math.round(s.minutes)} min · ${s.note||''}</div>
+        </div>
+      `;
+      const cb = label.querySelector('input');
+      cb.addEventListener('change', ()=>{
+        progress[s.id] = { ...(progress[s.id]||{}), done: cb.checked };
+        save(KEY_PROGRESS, progress);
+        updateTopicCompletions();
+        updateReadiness();
+        updateStreak();
+        evaluateBadges();
+      });
+      planList.append(label);
+    });
+
+    updateTopicCompletions();
+    updateReadiness();
+    updateStreak();
+  }
+
+  function pad(n){ return (n<10?'0':'')+n; }
+  function toICSDate(dateStr, h=16, m=0){
+    const d = new Date(dateStr + 'T00:00:00');
+    return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}T${pad(h)}${pad(m)}00`;
+  }
+  function downloadICS(){
+    if (!plan.length){ alert('No plan to export. Generate your plan first.'); return; }
+    const lines = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//G12 Maths Study Coach//ZA//',
+    ];
+    const durationMin = settings.minutesPerSession || 60;
+    plan.forEach((s, i) => {
+      const startHM = getStartTime(s.date);
+      const dtStart = toICSDate(s.date, startHM.h, startHM.m);
+      const end = new Date(`${s.date}T${pad(startHM.h)}:${pad(startHM.m)}:00`);
+      end.setMinutes(end.getMinutes() + durationMin);
+      const dtEnd = `${end.getFullYear()}${pad(end.getMonth()+1)}${pad(end.getDate())}T${pad(end.getHours())}${pad(end.getMinutes())}00`;
+      const topic = (TOPICS.find(t=>t.id===s.topicId)||{}).name || 'Study Session';
+      const uid = `g12-${s.id}-${i}@local`;
+      lines.push(
+        'BEGIN:VEVENT',
+        `UID:${uid}`,
+        `DTSTAMP:${toICSDate(fmtDate(new Date()), 12, 0)}`,
+        `DTSTART:${dtStart}`,
+        `DTEND:${dtEnd}`,
+        `SUMMARY:${s.paper || ''} • ${topic}`,
+        `DESCRIPTION:${(s.note||'').replace(/[\n\r]/g,' ')} (${Math.round(s.minutes)} min)`,
+        'END:VEVENT'
+      );
+    });
+    lines.push('END:VCALENDAR');
+
+    const blob = new Blob([lines.join('')], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'g12-maths-study-plan.ics';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  // ---------- Events ----------
+  const inpNameEl = document.getElementById('inpName');
+  inpNameEl && inpNameEl.addEventListener('input', e => { settings.learnerName = e.target.value; save(KEY_SETTINGS, settings); });
+  selBoard && selBoard.addEventListener('change', e => { settings.examBoard = e.target.value; save(KEY_SETTINGS, settings); if (badgeBoard) badgeBoard.textContent = settings.examBoard; renderResources(); });
+  inpExam && inpExam.addEventListener('change', e => { settings.examStart = e.target.value; save(KEY_SETTINGS, settings); });
+  inpHPW && inpHPW.addEventListener('change', e => { settings.hoursPerWeek = +e.target.value; save(KEY_SETTINGS, settings); });
+  inpSPW && inpSPW.addEventListener('change', e => { settings.sessionsPerWeek = +e.target.value; save(KEY_SETTINGS, settings); });
+  inpMPS && inpMPS.addEventListener('change', e => { settings.minutesPerSession = +e.target.value; save(KEY_SETTINGS, settings); });
+  chkPast && chkPast.addEventListener('change', e => { settings.includePastPaperSlot = e.target.checked; save(KEY_SETTINGS, settings); });
+
+  btnGenerate && btnGenerate.addEventListener('click', ()=>{ generatePlan(); evaluateBadges(); });
+  btnICS && btnICS.addEventListener('click', downloadICS);
+  btnReset && btnReset.addEventListener('click', () => {
+    if (!confirm('Reset plan & progress?')) return;
+    plan = []; progress = {}; save(KEY_PLAN, plan); save(KEY_PROGRESS, progress);
+    achieve = { thresholds: DEFAULT_THRESHOLDS.slice(), milestones: {50:false,70:false,90:false}, badges:{}, lastUnlockedId:null }; save(KEY_ACHIEVE, achieve);
+    quizState = { results: {} }; save(KEY_QUIZ, quizState);
+    renderPlan(); renderTopicsColumn(topicsP1, TOPICS_P1); renderTopicsColumn(topicsP2, TOPICS_P2); renderAchievements(); updateReadiness(); updateStreak();
+  });
+
+  btnAddLink && btnAddLink.addEventListener('click', () => {
+    const v = (inpLink.value||'').trim(); if (!v) return; customLinks.push({href:v}); save(KEY_LINKS, customLinks); inpLink.value=''; renderLinks();
+  });
+  btnClearLinks && btnClearLinks.addEventListener('click', () => { customLinks = []; save(KEY_LINKS, customLinks); renderLinks(); });
+
+  if (btnSaveThresh){
+    btnSaveThresh.addEventListener('click', ()=>{
+      const raw = (inpThresholds.value||'').trim();
+      const arr = raw.split(',').map(s=>parseInt(s,10)).filter(n=>!isNaN(n) && n>=1 && n<=100);
+      if (!arr.length){ alert('Enter comma-separated percentages, e.g., 50,70,90'); return; }
+      achieve.thresholds = Array.from(new Set(arr)).sort((a,b)=>a-b);
+      achieve.milestones = {};
+      save(KEY_ACHIEVE, achieve);
+      renderAchievements();
+      showToast('Milestones updated ✅');
+      updateReadiness();
+    });
+  }
+
+  if (btnShareBadge){ btnShareBadge.addEventListener('click', ()=>{
+    const id = achieve.lastUnlockedId || Object.keys(achieve.badges).find(k=>achieve.badges[k]);
+    if (!id) return alert('No badges to share yet.');
+    downloadBadgePNG(id);
+  }); }
+
+  // Boot
+  safe(init);
+  </script>
+</body>
+</html>
