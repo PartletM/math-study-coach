@@ -3,8 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Partlet Math Study Coach</title>
+  <title>Grade 12 Mathematics</title>
+
+  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- jsPDF for PDF export -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
   <style>
     :root{
       /* Brand palette */
@@ -20,18 +26,15 @@
       --gray-200:#e5e7eb;
       --ink:#0f172a;
     }
-
     @media print { .no-print { display: none !important; } }
     .toast { position: fixed; right: 16px; bottom: 16px; z-index: 50; }
     dialog::backdrop { background: rgba(0,0,0,.35); }
-
     .card{
       background:#d6bebe;
       border:1px solid var(--gray-200);
       border-radius: 1rem;
       box-shadow: 0 6px 18px rgba(2, 132, 199, .06);
     }
-
     .btn-primary{
       background: linear-gradient(135deg, var(--brand-400), var(--brand-600));
       color:#fff; border:1px solid rgba(255,255,255,.25);
@@ -44,7 +47,6 @@
       border:1px solid var(--gray-200);
       border-radius:.8rem; padding:.5rem .9rem; font-weight:500;
     }
-
     input[type="range"]{
       width:100%; cursor:pointer; height:6px; border-radius:999px; outline:none;
       background: linear-gradient(90deg, var(--brand-200), var(--brand-400));
@@ -60,29 +62,18 @@
       background:#fff; border:3px solid var(--brand-600);
       box-shadow: 0 2px 6px rgba(0,0,0,.2);
     }
-
-    .bar {
-      background: linear-gradient(90deg, var(--brand-400), var(--brand-600));
+    .bar { background: linear-gradient(90deg, var(--brand-400), var(--brand-600));
       height:.75rem; border-radius:999px;
       box-shadow: inset 0 0 0 1px rgba(0,0,0,.05), 0 2px 8px rgba(37,99,235,.25);
     }
-
     .chip {
       background: var(--brand-50);
       color: var(--brand-700);
       border:1px solid var(--gray-200);
       border-radius:.6rem; padding:.25rem .5rem; font-weight:600;
     }
-
-    .modal-head{
-      background: linear-gradient(135deg, var(--brand-400), var(--brand-600));
-      color:#fff;
-    }
-
-    .resource:hover{
-      box-shadow: 0 8px 24px rgba(2,132,199,.15);
-      border-color: var(--brand-200);
-    }
+    .modal-head{ background: linear-gradient(135deg, var(--brand-400), var(--brand-600)); color:#fff; }
+    .resource:hover{ box-shadow: 0 8px 24px rgba(2,132,199,.15); border-color: var(--brand-200); }
   </style>
 </head>
 
@@ -94,15 +85,14 @@
   <header class="sticky top-0 z-10 backdrop-blur bg-white/80 border-b">
     <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center gap-3 justify-between">
       <div class="flex items-center gap-3">
-        <img src="partlet-logo.png" alt="Partlet Math Study Coach" class="w-10 h-10 rounded-xl object-contain bg-white/60 border" />
+        <img src="partlet-logo.png" alt="Grade 12 Mathematics" class="w-10 h-10 rounded-xl object-contain bg-white/60 border" />
         <div>
-          <div class="font-semibold">Partlet Math Study Coach</div>
+          <div class="font-semibold">Grade 12 Mathematics</div>
           <div class="text-xs text-gray-600">Planner · Past Papers · Readiness</div>
         </div>
       </div>
 
       <div class="flex items-center gap-2 text-sm">
-        <!-- Hide these until logged in -->
         <span id="badgeBoard" class="requires-auth hidden px-2 py-1 rounded bg-blue-50 border text-blue-700">DBE</span>
         <span id="badgeReady" class="requires-auth hidden px-2 py-1 rounded bg-emerald-50 border text-emerald-700">Readiness: 0%</span>
 
@@ -122,8 +112,8 @@
 
   <!-- PUBLIC LANDING (visible while logged OUT) -->
   <section id="landing" class="public-only max-w-6xl mx-auto px-4 py-20 text-center">
-    <img src="partlet-logo.png" alt="Partlet Math Study Coach" class="mx-auto w-24 h-24 object-contain mb-4 rounded-xl bg-white/60 border" />
-    <h1 class="text-2xl font-bold mb-2">Partlet Math Study Coach</h1>
+    <img src="partlet-logo.png" alt="Grade 12 Mathematics" class="mx-auto w-24 h-24 object-contain mb-4 rounded-xl bg-white/60 border" />
+    <h1 class="text-2xl font-bold mb-2">Grade 12 Mathematics</h1>
     <p class="text-gray-600 mb-6">Plan smarter. Practice faster. Master Grade 12 Maths.</p>
     <div class="flex items-center justify-center gap-3">
       <button id="btnLoginLanding" class="px-4 py-2 rounded-lg border hover:bg-gray-50">Login</button>
@@ -134,7 +124,7 @@
 
   <!-- APP (hidden until login) -->
   <main class="requires-auth hidden max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <!-- Left column: Settings + Resources + Motivation -->
+    <!-- Left column -->
     <div class="space-y-6 lg:col-span-1">
       <!-- Settings -->
       <section class="card shadow p-5">
@@ -146,7 +136,7 @@
         </div>
         <div class="grid grid-cols-2 gap-3 text-sm">
           <label class="col-span-2">Learner name
-            <input id="inpName" class="w-full mt-1 px-3 py-2 rounded-lg border focus:ring-2 focus:ring-sky-300" placeholder="e.g. Partlet"/>
+            <input id="inpName" class="w-full mt-1 px-3 py-2 rounded-lg border focus:ring-2 focus:ring-sky-300" placeholder="e.g. Thandi"/>
           </label>
           <label>Exam board
             <select id="selBoard" class="w-full mt-1 px-3 py-2 rounded-lg border focus:ring-2 focus:ring-sky-300"><option>DBE</option><option>IEB</option></select>
@@ -218,7 +208,7 @@
       </section>
     </div>
 
-    <!-- Right column: Topics + Plan -->
+    <!-- Right column -->
     <div class="space-y-6 lg:col-span-2">
       <!-- Topics & Self-assessment -->
       <section class="card shadow p-5">
@@ -267,6 +257,33 @@
         </div>
       </section>
 
+      <!-- Career Suggestions -->
+      <section class="card shadow p-5" id="careerCard">
+        <div class="flex items-center justify-between gap-4 mb-2">
+          <div>
+            <h2 class="text-xl font-semibold">Career Suggestions</h2>
+            <p class="text-sm text-gray-600">Based on your topic confidence and completed sessions.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <select id="selCareerProfile" class="px-2 py-1 rounded-lg border text-sm">
+              <option value="default">Profile: DBE (Default)</option>
+              <option value="ieb">Profile: IEB-leaning</option>
+              <option value="wits_eng">Profile: Wits Engineering (example)</option>
+              <option value="uct_act">Profile: UCT Actuarial (example)</option>
+              <option value="up_cs">Profile: UP Computer Science (example)</option>
+            </select>
+            <button id="btnExplainCareer" class="btn-ghost text-xs">How it’s calculated</button>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 mt-2">
+          <button id="btnCareerPDF" class="btn-primary text-sm">Export Career Report (PDF)</button>
+        </div>
+        <div id="careerList" class="grid gap-3 mt-3"></div>
+        <div class="mt-4 text-xs text-gray-500">
+          Guidance only; final paths depend on other subjects, interests, and admissions.
+        </div>
+      </section>
+
       <!-- How to use -->
       <section class="card shadow p-5">
         <h2 class="text-xl font-semibold mb-3">How to use this app</h2>
@@ -300,7 +317,7 @@
     </div>
   </dialog>
 
-  <!-- Quiz fallback sheet (for browsers without <dialog>) -->
+  <!-- Quiz fallback sheet -->
   <div id="quizSheet" class="fixed inset-0 bg-black/40 hidden items-end justify-center z-50">
     <div class="bg-white w-full max-w-2xl rounded-t-2xl shadow-xl">
       <div class="p-5 border-b flex items-center justify-between modal-head rounded-t-2xl">
@@ -326,7 +343,7 @@
     <form id="authForm" class="p-5 space-y-3">
       <label class="block text-sm">
         <span>Display name</span>
-        <input id="authName" class="w-full mt-1 px-3 py-2 rounded-lg border" placeholder="e.g. Partlet" required />
+        <input id="authName" class="w-full mt-1 px-3 py-2 rounded-lg border" placeholder="e.g. Thandi" required />
       </label>
       <label class="block text-sm">
         <span>Email (used as username)</span>
@@ -414,111 +431,45 @@
   const forgotPass   = document.getElementById('forgotPass');
   const forgotClose  = document.getElementById('forgotClose');
 
-  /* Mode flag */
-//   let authMode = 'login'; // or 'register'
-
-//   function openAuth(mode='login'){
-//     authMode = mode;
-//     authTitle.textContent = mode === 'login' ? 'Login' : 'Register';
-//     authHint.textContent  = mode === 'login'
-//       ? 'Enter your email and password to sign in.'
-//       : 'A local account will be created on this device.';
-//     authName.parentElement.style.display = (mode==='register') ? 'block' : 'none';
-//     authForm.reset();
-//     if (window.HTMLDialogElement && typeof authDialog?.showModal === 'function'){ authDialog.showModal(); }
-//   }
-//   function closeAuth(){ authDialog?.close(); }
-
-//   function openForgot(){
-//     if (window.HTMLDialogElement && typeof forgotDialog?.showModal === 'function'){
-//       forgotForm.reset();
-//       forgotDialog.showModal();
-//     }
-//   }
-//   function closeForgot(){ forgotDialog?.close(); }
-// ------ Auth modal controller (drop-in replacement) ------
-let authMode = 'login'; // 'login' | 'register'
-
-// Safe open/close for <dialog> with fallback
-function openDialogSafe(dlg){
-  if (!dlg) return;
-  if (window.HTMLDialogElement && typeof dlg.showModal === 'function') {
-    dlg.showModal();
-  } else {
-    dlg.style.display = 'block';
-    dlg.setAttribute('open', '');
+  // ------ Auth modal controller (drop-in replacement) ------
+  let authMode = 'login'; // 'login' | 'register'
+  function openDialogSafe(dlg){
+    if (!dlg) return;
+    if (window.HTMLDialogElement && typeof dlg.showModal === 'function') dlg.showModal();
+    else { dlg.style.display='block'; dlg.setAttribute('open',''); }
   }
-}
-function closeDialogSafe(dlg){
-  if (!dlg) return;
-  if (typeof dlg.close === 'function') {
-    dlg.close();
-  } else {
-    dlg.style.display = 'none';
-    dlg.removeAttribute('open');
+  function closeDialogSafe(dlg){
+    if (!dlg) return;
+    if (typeof dlg.close === 'function') dlg.close();
+    else { dlg.style.display='none'; dlg.removeAttribute('open'); }
   }
-}
-
-function openAuth(mode='login'){
-  authMode = mode;
-
-  // Titles & hint
-  if (authTitle) authTitle.textContent = mode === 'login' ? 'Login' : 'Register';
-  if (authHint) {
-    authHint.textContent = mode === 'login'
+  function openAuth(mode='login'){
+    authMode = mode;
+    if (authTitle) authTitle.textContent = mode === 'login' ? 'Login' : 'Register';
+    if (authHint)  authHint.textContent  = mode === 'login'
       ? 'Enter your email and password to sign in.'
       : 'A local account will be created on this device.';
-  }
-
-  // Toggle Display name row visibility + required flag
-  const showName = (mode === 'register');
-  if (authName) {
-    // Show/hide the containing row/label cleanly
-    if (authName.parentElement) {
-      authName.parentElement.style.display = showName ? 'block' : 'none';
+    const showName = (mode === 'register');
+    if (authName){
+      if (authName.parentElement) authName.parentElement.style.display = showName ? 'block' : 'none';
+      authName.required = showName;
+      if (!showName) authName.value = '';
     }
-    authName.required = showName; // Critical: prevent hidden required from blocking submit
-    if (!showName) authName.value = ''; // optional: clear when hidden
+    if (authEmail) authEmail.required = true;
+    if (authPass)  authPass.required  = true;
+    openDialogSafe(authDialog);
   }
-
-  // Always require email & password
-  if (authEmail) authEmail.required = true;
-  if (authPass)  authPass.required  = true;
-
-  // Reset only fields visible in this mode to avoid stale validation states
-  if (authForm) {
-    // A light reset that preserves browser autofill where possible
-    if (!showName && authName) authName.setCustomValidity('');
-    if (authEmail) authEmail.setCustomValidity('');
-    if (authPass)  authPass.setCustomValidity('');
+  function closeAuth(){ closeDialogSafe(authDialog); }
+  function openForgot(){
+    if (!forgotDialog){ alert('Forgot password: use Login screen.'); return; }
+    forgotForm?.reset(); openDialogSafe(forgotDialog);
   }
+  function closeForgot(){ closeDialogSafe(forgotDialog); }
 
-  openDialogSafe(authDialog);
-}
-
-function closeAuth(){
-  closeDialogSafe(authDialog);
-}
-
-// Optional Forgot Password handlers (safe if dialog not present)
-function openForgot(){
-  if (typeof forgotDialog === 'undefined' || !forgotDialog) {
-    alert('Forgot password: enter your email on the Login screen and we will guide you next.');
-    return;
-  }
-  if (typeof forgotForm !== 'undefined' && forgotForm) forgotForm.reset();
-  openDialogSafe(forgotDialog);
-}
-function closeForgot(){
-  if (typeof forgotDialog !== 'undefined' && forgotDialog) closeDialogSafe(forgotDialog);
-}
-
-  // Header & landing buttons
   authClose?.addEventListener('click', closeAuth);
   btnLogin?.addEventListener('click', ()=> openAuth('login'));
   btnRegister?.addEventListener('click', ()=> openAuth('register'));
   btnForgot?.addEventListener('click', openForgot);
-
   btnLoginLanding?.addEventListener('click', ()=> openAuth('login'));
   btnRegisterLanding?.addEventListener('click', ()=> openAuth('register'));
   btnForgotLanding?.addEventListener('click', openForgot);
@@ -530,7 +481,6 @@ function closeForgot(){
     showToast?.('Logged out');
   });
 
-  /* Register / Login handler */
   authForm?.addEventListener('submit', async (e)=>{
     e.preventDefault();
     const email = authEmail.value.trim().toLowerCase();
@@ -574,19 +524,14 @@ function closeForgot(){
     closeForgot();
   });
 
-  /* Toggle UI based on session */
   function updateAuthUI(){
     const s = getSession();
     const loggedIn = !!s;
-
-    // header controls
     document.getElementById('btnLogin')?.classList.toggle('hidden', loggedIn);
     document.getElementById('btnRegister')?.classList.toggle('hidden', loggedIn);
     document.getElementById('btnForgot')?.classList.toggle('hidden', loggedIn);
     whoamiWrap?.classList.toggle('hidden', !loggedIn);
     if (loggedIn && helloUser) helloUser.textContent = `Hi, ${s.name}`;
-
-    // landing vs app
     document.querySelectorAll('.requires-auth').forEach(el => el.classList.toggle('hidden', !loggedIn));
     document.querySelectorAll('.public-only').forEach(el => el.classList.toggle('hidden', loggedIn));
   }
@@ -772,7 +717,6 @@ function closeForgot(){
   // ---------- Init ----------
   function init(){
     if (!topicsP1 || !topicsP2){ console.error('Topics containers missing'); return; }
-
     inpName && (inpName.value = settings.learnerName);
     selBoard && (selBoard.value = settings.examBoard);
     if (inpExam){ inpExam.value = settings.examStart; inpExam.min = todayISO(); }
@@ -794,6 +738,8 @@ function closeForgot(){
 
     // ensure initial auth visibility is correct
     updateAuthUI();
+    // initial career render
+    renderCareer();
   }
 
   // ---------- Renders ----------
@@ -868,6 +814,7 @@ function closeForgot(){
         card.querySelector('#lbl_'+t.id).textContent = v;
         updateReadiness();
         evaluateBadges();
+        renderCareer(); // live update
       }));
 
       // quiz open
@@ -940,6 +887,7 @@ function closeForgot(){
       const span = document.getElementById('done_'+t.id);
       if (span) span.textContent = counts[t.id]||0;
     });
+    renderCareer(); // keep in sync
   }
   function showToast(msg){
     if (!toast) return;
@@ -969,6 +917,7 @@ function closeForgot(){
         showToast(`Milestone reached: Readiness ≥ ${t}% 🎉`);
       }
     });
+    renderCareer(); // live update
   }
   function updateStreak(){
     if (!streakChip) return;
@@ -1043,7 +992,7 @@ function closeForgot(){
     const name = (settings.learnerName||'Grade 12 Learner').trim(); const date = new Date().toLocaleDateString();
     ctx.font = 'bold 26px system-ui, -apple-system, Segoe UI, Roboto'; ctx.fillText(`Awarded to: ${name}`, 40, H-120);
     ctx.font = '22px system-ui, -apple-system, Segoe UI, Roboto'; ctx.fillText(`Date: ${date}`, 40, H-80);
-    ctx.font = '18px system-ui, -apple-system, Segoe UI, Roboto'; ctx.fillText('Grade 12 Maths (SA) – Study Coach', 40, H-40);
+    ctx.font = '18px system-ui, -apple-system, Segoe UI, Roboto'; ctx.fillText('Partlet Math Study Coach', 40, H-40);
     const url = certCanvas.toDataURL('image/png'); const a = document.createElement('a'); a.href = url; a.download = `badge-${badgeId}.png`; document.body.appendChild(a); a.click(); a.remove();
   }
   function wrapText(ctx, text, x, y, maxWidth, lineHeight){
@@ -1065,7 +1014,6 @@ function closeForgot(){
     const shuffled = pool.map((v,i)=>[Math.random(), i]).sort((a,b)=>a[0]-b[0]).slice(0,k).map(x=>pool[x[1]]);
     return shuffled;
   }
-
   function openQuiz(topicId){
     currentQuiz = { topicId, items: sampleItems(topicId), answers: [], submitted:false };
     if (window.HTMLDialogElement && typeof quizModal?.showModal === 'function'){
@@ -1079,7 +1027,6 @@ function closeForgot(){
       quizSheet.classList.add('flex');
     }
   }
-
   function renderQuizBody(useDialog){
     const body = useDialog ? quizBody : sheetBody;
     const hint = useDialog ? quizHint : sheetHint;
@@ -1100,12 +1047,10 @@ function closeForgot(){
         }
         return `<label class="block text-sm"><input ${checked} type="radio" name="q${idx}" value="${i}" class="mr-2 accent-sky-600">${c}${feedback}</label>`;
       }).join('');
-
       const stepsBlock = submitted
         ? `<div class="mt-2 text-xs text-gray-700"><b>Steps:</b> ${it.steps||'—'}</div>`
         : `<button class="mt-2 px-2 py-1 rounded border text-xs" data-action="show-steps" data-idx="${idx}">Show steps</button>
            <div class="mt-2 text-xs text-gray-700 hidden" data-role="steps-${idx}"><b>Steps:</b> ${it.steps||'—'}</div>`;
-
       group.innerHTML = `
         <div class="font-medium mb-1">${idx+1}. ${it.q}</div>
         ${choiceHtml}
@@ -1119,22 +1064,20 @@ function closeForgot(){
         });
       });
 
-const btnSteps = group.querySelector('[data-action="show-steps"]');
-if (btnSteps){
-  btnSteps.addEventListener('click', ()=>{
-    const el = group.querySelector(`[data-role="steps-${idx}"]`);
-    if (!el) return; // defensive
-    const hiddenNow = el.classList.toggle('hidden');
-    btnSteps.textContent = hiddenNow ? 'Show steps' : 'Hide steps';
-  });
-}
-
+      const btnSteps = group.querySelector('[data-action="show-steps"]');
+      if (btnSteps){
+        btnSteps.addEventListener('click', ()=>{
+          const el = group.querySelector(`[data-role="steps-${idx}"]`);
+          if (!el) return;
+          const hiddenNow = el.classList.toggle('hidden');
+          btnSteps.textContent = hiddenNow ? 'Show steps' : 'Hide steps';
+        });
+      }
     });
 
     hint.textContent = submitted ? 'Review your answers.' : 'Answer all questions, then submit.';
     (useDialog ? quizSubmit : sheetSubmit).textContent = submitted ? 'Close' : 'Submit';
   }
-
   function scoreQuiz(){
     const { items, answers=[] } = currentQuiz;
     let correct = 0;
@@ -1142,7 +1085,6 @@ if (btnSteps){
     const score = Math.round(100 * correct / (items.length||1));
     return { correct, total: items.length, score };
   }
-
   if (quizSubmit) quizSubmit.addEventListener('click', ()=>{
     if (!currentQuiz) return;
     if (!currentQuiz.submitted){
@@ -1155,10 +1097,10 @@ if (btnSteps){
       quizState.results[t] = { lastScore: score, attempts: prev.attempts+1 };
       save(KEY_QUIZ, quizState);
       if (score < 60){ scheduleAdaptiveSessions(t, 2); showToast('Adaptive revision added: extra sessions scheduled.'); }
+      renderCareer();
     } else { quizModal.close(); }
   });
   if (quizClose) quizClose.addEventListener('click', ()=> quizModal.close());
-
   if (sheetSubmit) sheetSubmit.addEventListener('click', ()=>{
     if (!currentQuiz) return;
     if (!currentQuiz.submitted){
@@ -1171,6 +1113,7 @@ if (btnSteps){
       quizState.results[t] = { lastScore: score, attempts: prev.attempts+1 };
       save(KEY_QUIZ, quizState);
       if (score < 60){ scheduleAdaptiveSessions(t, 2); showToast('Adaptive revision added: extra sessions scheduled.'); }
+      renderCareer();
     } else {
       quizSheet.classList.add('hidden'); quizSheet.classList.remove('flex');
     }
@@ -1265,6 +1208,7 @@ if (btnSteps){
     renderPlan();
     updateReadiness();
     evaluateBadges();
+    renderCareer();
   }
 
   function renderPlan(){
@@ -1302,6 +1246,7 @@ if (btnSteps){
         updateReadiness();
         updateStreak();
         evaluateBadges();
+        renderCareer();
       });
       planList.append(label);
     });
@@ -1355,8 +1300,8 @@ if (btnSteps){
 
   // ---------- Events ----------
   const inpNameEl = document.getElementById('inpName');
-  inpNameEl && inpNameEl.addEventListener('input', e => { settings.learnerName = e.target.value; save(KEY_SETTINGS, settings); });
-  selBoard && selBoard.addEventListener('change', e => { settings.examBoard = e.target.value; save(KEY_SETTINGS, settings); if (badgeBoard) badgeBoard.textContent = settings.examBoard; renderResources(); });
+  inpNameEl && inpNameEl.addEventListener('input', e => { settings.learnerName = e.target.value; save(KEY_SETTINGS, settings); renderCareer(); });
+  selBoard && selBoard.addEventListener('change', e => { settings.examBoard = e.target.value; save(KEY_SETTINGS, settings); if (badgeBoard) badgeBoard.textContent = settings.examBoard; renderResources(); renderCareer(); });
   inpExam && inpExam.addEventListener('change', e => { settings.examStart = e.target.value; save(KEY_SETTINGS, settings); });
   inpHPW && inpHPW.addEventListener('change', e => { settings.hoursPerWeek = +e.target.value; save(KEY_SETTINGS, settings); });
   inpSPW && inpSPW.addEventListener('change', e => { settings.sessionsPerWeek = +e.target.value; save(KEY_SETTINGS, settings); });
@@ -1370,7 +1315,7 @@ if (btnSteps){
     plan = []; progress = {}; save(KEY_PLAN, plan); save(KEY_PROGRESS, progress);
     achieve = { thresholds: DEFAULT_THRESHOLDS.slice(), milestones: {50:false,70:false,90:false}, badges:{}, lastUnlockedId:null }; save(KEY_ACHIEVE, achieve);
     quizState = { results: {} }; save(KEY_QUIZ, quizState);
-    renderPlan(); renderTopicsColumn(topicsP1, TOPICS_P1); renderTopicsColumn(topicsP2, TOPICS_P2); renderAchievements(); updateReadiness(); updateStreak();
+    renderPlan(); renderTopicsColumn(topicsP1, TOPICS_P1); renderTopicsColumn(topicsP2, TOPICS_P2); renderAchievements(); updateReadiness(); updateStreak(); renderCareer();
   });
 
   btnAddLink && btnAddLink.addEventListener('click', () => {
@@ -1391,16 +1336,370 @@ if (btnSteps){
       updateReadiness();
     });
   }
-
   if (btnShareBadge){ btnShareBadge.addEventListener('click', ()=>{
     const id = achieve.lastUnlockedId || Object.keys(achieve.badges).find(k=>achieve.badges[k]);
     if (!id) return alert('No badges to share yet.');
     downloadBadgePNG(id);
   }); }
 
+  /* ---------- Career rules & profiles ---------- */
+  // Base rules (DBE default)
+  const CAREER_RULES_DEFAULT = [
+    {
+      id: 'eng',
+      title: 'Engineering (Civil/Mechanical/Electrical)',
+      blurb: 'Strong foundations in Algebra, Trigonometry, Calculus, and Geometry.',
+      rules: [
+        { topicId:'algebra', minConf:4, minDone:3, weight:2.5 },
+        { topicId:'trig',    minConf:4, minDone:3, weight:2.5 },
+        { topicId:'calc',    minConf:4, minDone:3, weight:3.0 },
+        { topicId:'ana',     minConf:3, minDone:2, weight:1.5 },
+        { topicId:'euc',     minConf:3, minDone:2, weight:1.5 },
+      ]
+    },
+    {
+      id: 'act',
+      title: 'Actuarial Science / Quant Finance',
+      blurb: 'High mastery of Functions, Sequences, Probability & Calculus.',
+      rules: [
+        { topicId:'func',    minConf:4, minDone:3, weight:2.5 },
+        { topicId:'seq',     minConf:4, minDone:3, weight:2.0 },
+        { topicId:'prob',    minConf:4, minDone:3, weight:2.5 },
+        { topicId:'calc',    minConf:4, minDone:3, weight:3.0 },
+        { topicId:'finance', minConf:3, minDone:2, weight:1.0 },
+      ]
+    },
+    {
+      id: 'cs',
+      title: 'Computer Science / Data Science / AI',
+      blurb: 'Problem-solving across Functions, Algebra, Probability & Calculus.',
+      rules: [
+        { topicId:'func',    minConf:3, minDone:2, weight:2.0 },
+        { topicId:'algebra', minConf:3, minDone:2, weight:2.0 },
+        { topicId:'prob',    minConf:3, minDone:2, weight:2.0 },
+        { topicId:'seq',     minConf:3, minDone:2, weight:1.0 },
+        { topicId:'calc',    minConf:3, minDone:2, weight:2.0 },
+      ]
+    },
+    {
+      id: 'arch',
+      title: 'Architecture / Built Environment / Surveying',
+      blurb: 'Spatial reasoning from Euclidean & Analytical Geometry with Trig.',
+      rules: [
+        { topicId:'euc', minConf:4, minDone:3, weight:3.0 },
+        { topicId:'ana', minConf:3, minDone:2, weight:2.0 },
+        { topicId:'trig',minConf:3, minDone:2, weight:2.0 },
+      ]
+    },
+    {
+      id: 'health',
+      title: 'Health Sciences (Physio/Radiography/Pharmacy)',
+      blurb: 'Solid numeracy via Functions, Algebra, and Probability.',
+      rules: [
+        { topicId:'func',    minConf:3, minDone:2, weight:2.0 },
+        { topicId:'algebra', minConf:3, minDone:2, weight:2.0 },
+        { topicId:'prob',    minConf:3, minDone:2, weight:1.5 },
+      ]
+    },
+    {
+      id: 'teaching',
+      title: 'Teaching (Mathematics/Science)',
+      blurb: 'Balanced mastery across topics + learning consistency.',
+      rules: [
+        { topicId:'algebra', minConf:3, minDone:2, weight:1.5 },
+        { topicId:'func',    minConf:3, minDone:2, weight:1.5 },
+        { topicId:'prob',    minConf:3, minDone:2, weight:1.0 },
+        { topicId:'euc',     minConf:3, minDone:2, weight:1.0 },
+      ],
+      bonus: (ctx) => (ctx.streak>=7 ? 1.0 : 0.0)
+    },
+  ];
+
+  // IEB-leaning: slightly higher expectations for geometry & trig, calculus depth
+  const CAREER_RULES_IEB = JSON.parse(JSON.stringify(CAREER_RULES_DEFAULT)).map(c=>{
+    const tweak = (r)=>r.forEach(x=>{
+      if (['euc','ana','trig','calc'].includes(x.topicId)){
+        x.minConf = Math.min(5, x.minConf+0.5); // bump expectations slightly
+        x.minDone = Math.max(x.minDone, 3);
+      }
+    });
+    tweak(c.rules);
+    return c;
+  });
+
+  // University-specific examples (illustrative only)
+  const CAREER_RULES_WITS_ENG = [
+    {
+      id:'wits_eng',
+      title:'Wits Engineering (example)',
+      blurb:'High Calculus/Algebra/Trig; strong geometry helpful.',
+      rules:[
+        { topicId:'calc',    minConf:4.5, minDone:4, weight:3.5 },
+        { topicId:'algebra', minConf:4.0, minDone:3, weight:2.5 },
+        { topicId:'trig',    minConf:4.0, minDone:3, weight:2.5 },
+        { topicId:'ana',     minConf:3.5, minDone:3, weight:1.5 },
+        { topicId:'euc',     minConf:3.5, minDone:3, weight:1.5 },
+      ]
+    },
+    ...CAREER_RULES_DEFAULT.filter(c=>!['eng'].includes(c.id)) // keep others to compare
+  ];
+
+  const CAREER_RULES_UCT_ACT = [
+    {
+      id:'uct_act',
+      title:'UCT Actuarial Science (example)',
+      blurb:'Very strong Calculus, Probability, Functions & Sequences.',
+      rules:[
+        { topicId:'calc',    minConf:4.5, minDone:4, weight:3.5 },
+        { topicId:'prob',    minConf:4.5, minDone:4, weight:3.0 },
+        { topicId:'func',    minConf:4.0, minDone:3, weight:2.5 },
+        { topicId:'seq',     minConf:4.0, minDone:3, weight:2.0 },
+        { topicId:'algebra', minConf:4.0, minDone:3, weight:2.0 },
+      ]
+    },
+    ...CAREER_RULES_DEFAULT.filter(c=>!['act'].includes(c.id))
+  ];
+
+  const CAREER_RULES_UP_CS = [
+    {
+      id:'up_cs',
+      title:'UP Computer Science (example)',
+      blurb:'Solid Algebra/Functions/Probability; Calculus beneficial.',
+      rules:[
+        { topicId:'algebra', minConf:4.0, minDone:3, weight:2.5 },
+        { topicId:'func',    minConf:4.0, minDone:3, weight:2.5 },
+        { topicId:'prob',    minConf:3.5, minDone:3, weight:2.0 },
+        { topicId:'calc',    minConf:3.5, minDone:2, weight:2.0 },
+        { topicId:'seq',     minConf:3.0, minDone:2, weight:1.0 },
+      ]
+    },
+    ...CAREER_RULES_DEFAULT.filter(c=>!['cs'].includes(c.id))
+  ];
+
+  const CAREER_PROFILES = {
+    default: CAREER_RULES_DEFAULT,
+    ieb: CAREER_RULES_IEB,
+    wits_eng: CAREER_RULES_WITS_ENG,
+    uct_act: CAREER_RULES_UCT_ACT,
+    up_cs: CAREER_RULES_UP_CS,
+  };
+
+  const selCareerProfile = document.getElementById('selCareerProfile');
+  selCareerProfile?.addEventListener('change', ()=> renderCareer());
+
+  function getProfileRules(){
+    const key = selCareerProfile?.value || 'default';
+    return CAREER_PROFILES[key] || CAREER_RULES_DEFAULT;
+  }
+
+  /* Build a quick lookup of per-topic {conf, done} */
+  function getTopicStatsMap(){
+    const stats = {};
+    TOPICS.forEach(t => stats[t.id] = { conf: (progress['self_'+t.id]?.score)||0, done: 0 });
+    // count completions per topic from plan/progress
+    plan.forEach(s => {
+      if (progress[s.id]?.done && stats[s.topicId]) stats[s.topicId].done++;
+    });
+    return stats;
+  }
+
+  /* Current streak */
+  function getCurrentStreak(){
+    const dates = (()=> {
+      const set = new Set();
+      plan.forEach(s => { if (progress[s.id]?.done) set.add(s.date); });
+      return set;
+    })();
+    let streak = 0;
+    const oneDay = 24*3600*1000;
+    let cursor = new Date();
+    while (true){
+      const iso = fmtDate(cursor);
+      if (dates.has(iso)) { streak++; cursor = new Date(cursor.getTime() - oneDay); }
+      else break;
+    }
+    return streak;
+  }
+
+  /* Compute suggestions with reasons & boosts */
+  function computeCareerSuggestions(){
+    const stats = getTopicStatsMap();
+    const streak = getCurrentStreak();
+    const RULES = getProfileRules();
+
+    const results = RULES.map(c => {
+      const maxScore = c.rules.reduce((a,r)=> a + r.weight, 0) + (c.bonus ? 1.0 : 0.0);
+      let score = 0;
+      const reasons = [];
+      const boosts  = [];
+
+      c.rules.forEach(r => {
+        const st = stats[r.topicId] || {conf:0, done:0};
+        if (st.conf >= r.minConf && st.done >= r.minDone){
+          score += r.weight;
+          reasons.push(`${(TOPICS.find(t=>t.id===r.topicId)||{name:r.topicId}).name} ✓`);
+        }else{
+          const lacking = [];
+          if (st.conf < r.minConf) lacking.push(`conf ${st.conf}/${r.minConf}`);
+          if (st.done < r.minDone) lacking.push(`${st.done}/${r.minDone} sessions`);
+          boosts.push(`Improve ${(TOPICS.find(t=>t.id===r.topicId)||{name:r.topicId}).name} (${lacking.join(', ')})`);
+        }
+      });
+
+      if (c.bonus){
+        const b = c.bonus({streak});
+        score += b;
+        if (b>0) reasons.push(`Consistency bonus (streak ${streak}d) ✓`);
+      }
+
+      const fit = Math.round(100 * score / Math.max(1, maxScore));
+      return { id:c.id, title:c.title, blurb:c.blurb, fit, reasons, boosts, score, maxScore };
+    });
+
+    results.sort((a,b)=> b.fit - a.fit || b.score - a.score);
+    return results;
+  }
+
+  /* Render top 3 suggestions */
+  function renderCareer(){
+    const wrap = document.getElementById('careerList');
+    if (!wrap) return;
+    const suggestions = computeCareerSuggestions().slice(0,3);
+    wrap.innerHTML = '';
+
+    if (!suggestions.length){
+      wrap.innerHTML = `<div class="text-sm text-gray-600">Start sliding your topic confidence and generating a plan to see suggestions.</div>`;
+      return;
+    }
+
+    suggestions.forEach(s => {
+      const row = document.createElement('div');
+      row.className = 'p-4 rounded-xl border bg-white';
+
+      const barId = `fit_${s.id}_${Date.now()}`;
+      row.innerHTML = `
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <div class="font-medium">${s.title}</div>
+            <div class="text-xs text-gray-600">${s.blurb}</div>
+          </div>
+          <div class="text-sm font-semibold">${s.fit}% fit</div>
+        </div>
+
+        <div class="mt-2">
+          <div class="w-full bg-gray-200 rounded-full h-2">
+            <div id="${barId}" class="bar" style="width:${s.fit}%"></div>
+          </div>
+        </div>
+
+        <div class="mt-2 text-xs">
+          <div class="text-gray-700 mb-1">Why this fits:</div>
+          <div class="flex flex-wrap gap-1">
+            ${s.reasons.length ? s.reasons.map(r=>`<span class="chip">${r}</span>`).join('') : `<span class="chip">Early signals only</span>`}
+          </div>
+        </div>
+
+        ${s.boosts.length ? `
+        <div class="mt-2 text-xs">
+          <div class="text-gray-700 mb-1">Boost your fit:</div>
+          <ul class="list-disc pl-5 text-gray-600">
+            ${s.boosts.slice(0,3).map(b=>`<li>${b}</li>`).join('')}
+          </ul>
+        </div>` : ''}
+      `;
+      wrap.append(row);
+    });
+  }
+
+  // Career explainer
+  document.getElementById('btnExplainCareer')?.addEventListener('click', ()=>{
+    const profile = (selCareerProfile?.selectedOptions?.[0]?.textContent || '').trim();
+    alert([
+      `How it works (${profile}):`,
+      '• Your self-rated confidence (0–5) and completed sessions per topic are checked against simple weighted rules per career.',
+      '• Matching rules add to a career score which is normalized to a % fit.',
+      '• Improve fit by raising confidence and finishing sessions in the suggested topics.',
+      'Note: University-specific profiles are illustrative examples for demo purposes.'
+    ].join('\n'));
+  });
+
+  // PDF Export (Career Report)
+  document.getElementById('btnCareerPDF')?.addEventListener('click', ()=>{
+    const { jsPDF } = window.jspdf || {};
+    if (!jsPDF){ alert('PDF library not loaded. Check internet connectivity.'); return; }
+    const doc = new jsPDF({ unit:'pt', format:'a4' });
+    const margin = 48; let y = margin;
+
+    const learner = (settings.learnerName||'Grade 12 Learner').trim();
+    const board   = settings.examBoard || 'DBE';
+    const profileKey = selCareerProfile?.value || 'default';
+    const profileName = selCareerProfile?.selectedOptions?.[0]?.textContent || 'DBE (Default)';
+
+    const suggestions = computeCareerSuggestions().slice(0,5); // up to top 5 in PDF
+    const stats = getTopicStatsMap();
+
+    doc.setFont('helvetica','bold'); doc.setFontSize(16);
+    doc.text('Career Report — Grade 12 Mathematics', margin, y); y+=20;
+    doc.setFont('helvetica','normal'); doc.setFontSize(11);
+    doc.text(`Learner: ${learner}`, margin, y); y+=16;
+    doc.text(`Exam Board: ${board}   •   Profile: ${profileName}`, margin, y); y+=24;
+
+    doc.setFont('helvetica','bold'); doc.text('Top Suggestions', margin, y); y+=14;
+    doc.setFont('helvetica','normal');
+    if (!suggestions.length){
+      doc.text('Insufficient data. Adjust topic confidence and complete sessions to get suggestions.', margin, y); y+=16;
+    } else {
+      suggestions.forEach((s, idx)=>{
+        doc.setFont('helvetica','bold'); doc.text(`${idx+1}. ${s.title} — ${s.fit}% fit`, margin, y); y+=14;
+        doc.setFont('helvetica','normal');
+        const wrap = (str)=> doc.splitTextToSize(str, 520);
+        doc.text(wrap(s.blurb), margin, y); y+=14;
+        if (s.reasons.length){
+          doc.text('Why this fits:', margin, y); y+=14;
+          s.reasons.forEach(r=>{ doc.text('• '+r, margin+12, y); y+=14; });
+        }
+        if (s.boosts.length){
+          doc.text('Boost your fit:', margin, y); y+=14;
+          s.boosts.slice(0,4).forEach(b=>{ doc.text('• '+b, margin+12, y); y+=14; });
+        }
+        y+=8;
+        if (y > 760){ doc.addPage(); y = margin; }
+      });
+    }
+
+    // Topic snapshot table
+    if (y > 720){ doc.addPage(); y = margin; }
+    doc.setFont('helvetica','bold'); doc.text('Topic Snapshot (Confidence / Sessions Done)', margin, y); y+=16;
+    doc.setFont('helvetica','normal');
+    const rows = TOPICS.map(t=>({
+      name: t.name,
+      conf: (stats[t.id]?.conf||0),
+      done: (stats[t.id]?.done||0)
+    }));
+
+    const col1 = margin, col2 = margin+340, col3 = margin+470;
+    doc.text('Topic', col1, y); doc.text('Confidence (0–5)', col2, y); doc.text('Sessions Done', col3, y); y+=12;
+    doc.setLineWidth(0.5); doc.line(margin, y, margin+520, y); y+=10;
+    rows.forEach(r=>{
+      if (y>760){ doc.addPage(); y=margin; }
+      doc.text(r.name, col1, y);
+      doc.text(String(r.conf), col2, y);
+      doc.text(String(r.done), col3, y);
+      y+=16;
+    });
+
+    // Footer
+    if (y>760){ doc.addPage(); y=margin; }
+    y+=8;
+    doc.setFontSize(9);
+    doc.text('Note: This guidance is illustrative and depends on your broader subject profile and official university requirements.', margin, y);
+
+    const fname = `Career_Report_${learner.replace(/\s+/g,'_') || 'Learner'}.pdf`;
+    doc.save(fname);
+  });
+
   // Boot
   safe(init);
   </script>
 </body>
 </html>
-
